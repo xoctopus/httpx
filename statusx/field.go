@@ -30,7 +30,9 @@ func (fs ErrorFields) String() string {
 		return ""
 	}
 
-	sort.Sort(fs)
+	sort.Slice(fs, func(i, j int) bool {
+		return fs[i].Field < fs[j].Field
+	})
 
 	buf := &bytes.Buffer{}
 	buf.WriteString("<")
@@ -42,16 +44,4 @@ func (fs ErrorFields) String() string {
 	}
 	buf.WriteString(">")
 	return buf.String()
-}
-
-func (fs ErrorFields) Len() int {
-	return len(fs)
-}
-
-func (fs ErrorFields) Swap(i, j int) {
-	fs[i], fs[j] = fs[j], fs[i]
-}
-
-func (fs ErrorFields) Less(i, j int) bool {
-	return fs[i].Field < fs[j].Field
 }
