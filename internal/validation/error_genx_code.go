@@ -8,20 +8,22 @@ import (
 func (e Error) Message() string {
 	switch e {
 	default:
-		return fmt.Sprintf("[validators.Error:%d] unknown", e)
+		return fmt.Sprintf("[validation.Error:%d] unknown", e)
 	case ERROR_UNDEFINED:
-		return "[validators.Error:0] undefined"
+		return "[validation.Error:0] undefined"
 	case ERROR__STRING_LENGTH_MODE:
-		return "[validators.Error:1] invalid string length mode, expect 'byte' or 'rune'"
+		return "[validation.Error:1] invalid string length mode, expect 'byte' or 'rune'"
 	case ERROR__NOT_MATCH_REGEXP:
-		return "[validators.Error:2] invalid string not match regexp"
+		return "[validation.Error:2] invalid string not match regexp"
 	case ERROR__SLICE_PARAM:
-		return "[validators.Error:3] invalid string parameter"
+		return "[validation.Error:3] invalid string parameter"
 	case ERROR__MAP_PARAM:
-		return "[validators.Error:4] invalid map parameter"
+		return "[validation.Error:4] invalid map parameter"
 	case ERROR__INPUT_TYPE:
-		return "[validators.Error:5] invalid input type"
+		return "[validation.Error:5] invalid input: invalid type"
 	case ERROR__INPUT_VALUE:
-		return "[validators.Error:6] invalid input value"
+		return "[validation.Error:6] invalid input: invalid value"
+	case ERROR__MISSING_REQUIRED:
+		return "[validation.Error:7] invalid input: missing required"
 	}
 }

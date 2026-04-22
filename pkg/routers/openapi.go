@@ -28,6 +28,6 @@ func (o *OpenAPI) Output(ctx context.Context) (any, error) {
 	return nil, errors.New("forbidden")
 }
 
-func (o *OpenAPI) ResponseContentType() string {
+func (o *OpenAPI) ContentType() string {
 	return "application/json"
 }

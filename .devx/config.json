@@ -47,7 +47,7 @@
 			},
 			{
 				"name": "devgen",
-				"repo": "cg.gitlab.com/saitox/devx/cmd/devgen",
+				"repo": "github.com/xoctopus/devx/cmd/devgen",
 				"version": "main",
 				"type": "DEVGEN",
 				"description": "dev configuration generating"

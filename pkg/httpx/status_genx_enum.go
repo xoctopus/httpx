@@ -72,7 +72,7 @@ func ParseStatus(key string) (Status, error) {
 		return STATUS__METHOD_NOT_ALLOWED, nil
 	case "NOT_ACCEPTABLE":
 		return STATUS__NOT_ACCEPTABLE, nil
-	case "PROXY_AUTHREQUIRED":
+	case "PROXY_AUTH_REQUIRED":
 		return STATUS__PROXY_AUTH_REQUIRED, nil
 	case "REQUEST_TIMEOUT":
 		return STATUS__REQUEST_TIMEOUT, nil
@@ -295,7 +295,7 @@ func (v Status) String() string {
 	case STATUS__NOT_ACCEPTABLE:
 		return "NOT_ACCEPTABLE"
 	case STATUS__PROXY_AUTH_REQUIRED:
-		return "PROXY_AUTHREQUIRED"
+		return "PROXY_AUTH_REQUIRED"
 	case STATUS__REQUEST_TIMEOUT:
 		return "REQUEST_TIMEOUT"
 	case STATUS__CONFLICT:
