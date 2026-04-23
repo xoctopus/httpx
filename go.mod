@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/go-json-experiment/json v0.0.0-20260214004413-d219187c3433
 	github.com/xoctopus/logx v0.3.1
-	github.com/xoctopus/x v0.4.4
+	github.com/xoctopus/x v0.4.5
 	golang.org/x/net v0.53.0
 )
 
