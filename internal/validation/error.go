@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/xoctopus/x/codex"
@@ -25,11 +26,15 @@ const (
 )
 
 func IsValidationError(err error) bool {
-	_, ok1 := codex.Is[rule.Error](err)
-	_, ok2 := codex.Is[va.Error](err)
-	_, ok3 := codex.Is[Error](err)
-
-	return ok1 || ok2 || ok3
+	if codex.Is[rule.Error](err) || codex.Is[va.Error](err) || codex.Is[Error](err) {
+		return true
+	}
+	var (
+		hasPosition         *HasPosition
+		hasLocation         *HasLocation
+		hasLocationPosition *HasLocationPosition
+	)
+	return errors.As(err, &hasPosition) || errors.As(err, &hasLocation) || errors.As(err, &hasLocationPosition)
 }
 
 func WrapPosition[P ~string](err error, position P) error {

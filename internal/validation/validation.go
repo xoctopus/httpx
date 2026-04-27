@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/xoctopus/x/misc/must"
 	"github.com/xoctopus/x/syncx"
 
 	"github.com/xoctopus/httpx/internal/scanner"
@@ -61,7 +60,11 @@ var gValidators = &validators{
 
 func Register(p Provider) {
 	_, ok := gValidators.providers[p.Name()]
-	must.BeTrueF(!ok, "%s validator not be registered")
+	if ok {
+		// must.BeTrueF(!ok, "%s validator not be registered", p.Name())
+		fmt.Printf("WARN %s validator have been registered", p.Name())
+		return
+	}
 	gValidators.providers[p.Name()] = p
 
 	for _, name := range p.Variants() {
@@ -69,7 +72,6 @@ func Register(p Provider) {
 			gValidators.providers[p.Name()] = p
 		}
 	}
-	return
 }
 
 func New(option Option) (Validator, error) {

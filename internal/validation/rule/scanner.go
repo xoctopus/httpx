@@ -291,7 +291,7 @@ func (s *_scanner) pattern() (Matcher, error) {
 	s.Next()
 
 	m := NewMatcher()
-	if err := m.SetPattern(string(b.Bytes())); err != nil {
+	if err := m.SetPattern(b.String()); err != nil {
 		return nil, err
 	}
 	return m, nil
