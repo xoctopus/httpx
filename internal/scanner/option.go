@@ -10,6 +10,10 @@ import (
 )
 
 func ParseFieldOptions(sf reflect.StructField) (FieldOptions, bool, error) {
+	return parseFieldOptions(sf, "")
+}
+
+func parseFieldOptions(sf reflect.StructField, prefix string) (FieldOptions, bool, error) {
 	if v, ok := sf.Tag.Lookup("in"); ok && v == "body" {
 		if _, exists := sf.Tag.Lookup("name"); !exists {
 			sf.Tag += reflect.StructTag(fmt.Sprintf(` name:%q`, v))
@@ -44,18 +48,27 @@ func ParseFieldOptions(sf reflect.StructField) (FieldOptions, bool, error) {
 			format = o.Unquoted()
 		}
 
+		name := cmp.Or(flag.Name(), sf.Name)
+		if len(prefix) > 0 {
+			name = prefix + "." + name
+		}
+
 		options = &FieldOptions{
-			Name:       cmp.Or(flag.Name(), sf.Name),
+			Name:       name,
 			HasName:    len(flag.Name()) > 0,
 			Casing:     casing,
 			Inline:     flag.HasOption("inline"),
 			Unknown:    flag.HasOption("unknown"),
+			Embedded:   flag.HasOption("embedded"),
 			Omitzero:   flag.HasOption("omitzero"),
 			Omitempty:  flag.HasOption("omitempty"),
 			String:     flag.HasOption("string"),
 			Format:     format,
 			StringItem: false,
 		}
+	}
+	if options.Embedded && (options.Inline || options.Unknown) {
+		return FieldOptions{}, false, errors.New("couldn't have both `inline` and `embedded`")
 	}
 	if !options.String {
 		options.String = CanUnmarshalByString(sf.Type)
@@ -73,6 +86,7 @@ type FieldOptions struct {
 	Casing     Casing
 	Inline     bool
 	Unknown    bool
+	Embedded   bool
 	Omitzero   bool
 	Omitempty  bool
 	String     bool

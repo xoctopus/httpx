@@ -64,9 +64,13 @@ func TestScan(t *testing.T) {
 			slices.Collect(s.FieldsInQuery()),
 			func(f *scanner.Field) string { return f.Name },
 		)
-		Expect(t, fieldsInQuery, EquivalentSlice([]string{"q0", "q1", "direct"}))
+		Expect(t, fieldsInQuery, EquivalentSlice([]string{
+			"q0", "q1", "direct",
+			"r1.lt", "r1.lte", "r1.gt", "r1.gte",
+			"r2.lt", "r2.lte", "r2.gt", "r2.gte",
+		}))
 
-		Expect(t, s.Len(), Equal(10))
+		Expect(t, s.Len(), Equal(18))
 
 		flattened := slicex.M(
 			slices.Collect(s.Range),
@@ -74,6 +78,8 @@ func TestScan(t *testing.T) {
 		)
 		Expect(t, flattened, EquivalentSlice([]string{
 			"token", "k1", "orgID", "q0", "userdata", "k2", "userID", "q1", "body", "direct",
+			"r1.lt", "r1.lte", "r1.gt", "r1.gte",
+			"r2.lt", "r2.lte", "r2.gt", "r2.gte",
 		}))
 
 		inlined, _ := s.Inlined()

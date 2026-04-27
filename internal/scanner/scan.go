@@ -28,7 +28,7 @@ func (v *structs) Scan(typ reflect.Type) (*Struct, error) {
 		return fs, nil
 	}
 
-	fs, err := scan(typ)
+	fs, err := scan(typ, "")
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (v *structs) Scan(typ reflect.Type) (*Struct, error) {
 	return fs, nil
 }
 
-func scan(root reflect.Type) (*Struct, error) {
+func scan(root reflect.Type, prefix string) (*Struct, error) {
 	type entry struct {
 		typ reflect.Type
 		idx []int
@@ -58,7 +58,7 @@ func scan(root reflect.Type) (*Struct, error) {
 		t := e.typ
 		for i := range t.NumField() {
 			f := t.Field(i)
-			options, ignored, err := ParseFieldOptions(f)
+			options, ignored, err := parseFieldOptions(f, prefix)
 			if err != nil {
 				return nil, err
 			}
@@ -80,7 +80,24 @@ func scan(root reflect.Type) (*Struct, error) {
 				fi.Inline = true
 			}
 
-			if fi.Inline || fi.Unknown {
+			// The embedded option is only permitted within query tags and must
+			// be explicitly specified. see Testdata.InQuery
+			if fi.Embedded && fi.Tag.Get("in") == "query" {
+				name := options.Name
+				if len(prefix) > 0 {
+					name = prefix + "." + name
+				}
+				se, erre := scan(fi.Type, name)
+				if erre != nil {
+					return nil, erre
+				}
+				for fe := range se.Range {
+					fields = append(fields, fe)
+				}
+				continue
+			}
+
+			if fi.Inline || fi.Unknown || fi.Embedded {
 				tf := f.Type
 				for tf.Kind() == reflect.Pointer && tf.Name() == "" {
 					tf = tf.Elem()

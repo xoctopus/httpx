@@ -25,6 +25,16 @@ type InPath struct {
 type InQuery struct {
 	Q0 int    `in:"query" name:"q0,format:bin"`
 	Q1 string `in:"query" name:"q1"`
+
+	R1 Ranger[int]     `in:"query" name:"r1,embedded"`
+	R2 Ranger[float64] `in:"query" name:"r2,embedded"`
+}
+
+type Ranger[T comparable] struct {
+	Min  T `in:"query" name:"gt"`
+	MinE T `in:"query" name:"gte"`
+	Max  T `in:"query" name:"lt"`
+	MaxE T `in:"query" name:"lte"`
 }
 
 type InHeader struct {
@@ -50,10 +60,10 @@ type Testdata struct {
 
 	Direct int `in:"query" name:"direct"`
 
-	InCookie
-	InHeader
 	InPath
 	*InQuery
+	InCookie
+	InHeader
 
 	InBody  `in:"body"`
 	Inlined // inlined: embedded field and not a struct
