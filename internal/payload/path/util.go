@@ -98,8 +98,7 @@ func ParamGetterFrom(ctx context.Context) ValueGetter {
 type Values map[string]string
 
 func (vs Values) PathValue(k string) string {
-	v, _ := vs[k]
-	return v
+	return vs[k]
 }
 
 func (vs Values) SetPathValue(key, value string) {

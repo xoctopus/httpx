@@ -13,7 +13,7 @@ type (
 	Result = client.Result
 )
 
-// ClientIP
+// ClientIP returns client ip
 // ref: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For
 func ClientIP(r *http.Request) string {
 	ip := ClientIPByHeaderForwardedFor(r.Header.Get("X-Forwarded-For"))
@@ -33,7 +33,7 @@ func ClientIP(r *http.Request) string {
 	return ""
 }
 
-// ClientIPByHeaderForwardedFor
+// ClientIPByHeaderForwardedFor returns client ip
 // X-Forwarded-For: client, proxy1, ..., proxyN
 func ClientIPByHeaderForwardedFor(v string) string {
 	if before, _, ok := strings.Cut(v, ","); ok {
@@ -42,7 +42,7 @@ func ClientIPByHeaderForwardedFor(v string) string {
 	return strings.TrimSpace(v)
 }
 
-// ClientIPByHeaderRealIP
+// ClientIPByHeaderRealIP returns client ip
 // X-Real-IP: 203.0.113.195, 2001:db8:85a3:8d3:1319:8a2e:370:7348
 func ClientIPByHeaderRealIP(v string) string {
 	return strings.TrimSpace(v)

@@ -187,7 +187,7 @@ func (p *parameter) MarshalValues(ctx context.Context, f *scanner.Field) (values
 			if e != nil {
 				return e
 			}
-			defer c.Close()
+			defer func() { _ = c.Close() }()
 			_, e = io.Copy(b, c)
 			return e
 		}(); err != nil {

@@ -54,9 +54,9 @@ func ErrorResponse(err error, appliers ...ResponseApplier) Response[error] {
 		apply(mod)
 	}
 
-	if rsp.StatusCode() == 0 {
-		// TODO
-	}
+	// // TODO
+	// if rsp.StatusCode() == 0 {
+	// }
 
 	return rsp
 }

@@ -45,7 +45,7 @@ func (t *multipartT) Media() string {
 }
 
 func (t *multipartT) Into(ctx context.Context, r io.ReadCloser, v any) error {
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 
 	f := scanner.UnwrapField(v)
 
