@@ -28,21 +28,20 @@ func NewIntScaleVa(r rule.Rule) (*IntScaleVa, error) {
 		is.bits = uint8(bits)
 	} else {
 		params := r.Parameters()
-		if len(params) == 0 {
-			return is, nil
-		}
-		if len(params) != 1 {
+		if len(params) != 1 && len(params) != 0 {
 			return nil, codex.Errorf(ERROR__INVALID_INT_BITS, "got %d parameters", len(params))
 		}
-		lit, ok := params[0].(*rule.Literal)
-		if !ok {
-			return nil, codex.Errorf(ERROR__INVALID_INT_BITS, "got parameter %s", params[0].Type())
+		if len(params) == 1 {
+			lit, ok := params[0].(*rule.Literal)
+			if !ok {
+				return nil, codex.Errorf(ERROR__INVALID_INT_BITS, "got parameter %s", params[0].Type())
+			}
+			bits, err := strconv.ParseUint(lit.String(), 10, 8)
+			if err != nil || bits > 64 {
+				return nil, codex.Errorf(ERROR__INVALID_INT_BITS, "got %s", r.Name())
+			}
+			is.bits = uint8(bits)
 		}
-		bits, err := strconv.ParseUint(lit.String(), 10, 8)
-		if err != nil || bits > 64 {
-			return nil, codex.Errorf(ERROR__INVALID_INT_BITS, "got %s", r.Name())
-		}
-		is.bits = uint8(bits)
 	}
 	is.mini, is.maxi = -1<<(is.bits-1), 1<<(is.bits-1)-1
 	is.minu, is.maxu = 0, uint64(1<<is.bits)

@@ -10,10 +10,8 @@ import (
 type (
 	// Content payload content
 	Content interface {
-		// Type presents content-type value. eg: json, text, etc.
-		Type() string
-		// Length presents content length limitation. -1 is unlimited
-		Length() int64
+		ContentType() string
+		ContentLength() int64
 
 		io.ReadCloser
 	}
@@ -22,7 +20,7 @@ type (
 		Content
 
 		SetContentType(string)
-		SetLength(int64)
+		SetContentLength(int64)
 		SetReadCloser(io.ReadCloser)
 	}
 
@@ -30,16 +28,34 @@ type (
 		SetContentType(string)
 	}
 
-	Applier interface {
+	HeaderApplier interface {
 		ApplyHeader(header http.Header)
 	}
 
-	Describer interface {
+	MediaTypeDescriber interface {
 		ContentType() string
 	}
 
+	MediaTypeModifier interface {
+		SetContentType(string)
+	}
+
+	LengthDescriber interface {
+		ContentLength() int64
+	}
+
+	LengthModifier interface {
+		SetContentLength(int64)
+	}
+
+	// Reader defined the behavior of reading data from an io.ReadCloser and
+	// deserializing into `dst`.
 	Reader interface {
-		Into(context.Context, io.ReadCloser, any) error
+		Into(ctx context.Context, rc io.ReadCloser, dst any) error
+	}
+
+	ReaderFrom interface {
+		ReadFrom(rc io.ReadCloser) (int64, error)
 	}
 
 	Writer interface {

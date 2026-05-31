@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"text/scanner"
 	"unicode"
+
+	"github.com/xoctopus/x/misc/must"
 )
 
 // Compile compiles validation rule
@@ -17,6 +19,18 @@ func Compile[T ~[]byte | ~string](data T) (Rule, error) {
 	}
 	s.Init(bytes.NewReader([]byte(data)))
 	return fromScanner(&_scanner{Scanner: s, data: []byte(data)})
+}
+
+func CompileAsBuilder[T ~[]byte | ~string](data T) (Builder, error) {
+	r, err := Compile(data)
+	if err != nil {
+		return nil, err
+	}
+	return r.(Builder), nil
+}
+
+func MustCompile[T ~[]byte | ~string](data T) Rule {
+	return must.NoErrorV(Compile(data))
 }
 
 func fromScanner(s *_scanner) (Rule, error) {

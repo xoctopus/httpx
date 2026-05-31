@@ -9,19 +9,7 @@ type Segment interface {
 	ParamString() string
 }
 
-type segment string
-
-func (s segment) ParamString() string {
-	return string(s)
-}
-
-type NamedSegment interface {
-	Segment
-	ParamName() string
-	Multiple() bool
-}
-
-func NewNamedSegment(part string) NamedSegment {
+func NewSegment(part string) Segment {
 	if len(part) == 0 {
 		return nil
 	}
@@ -35,7 +23,20 @@ func NewNamedSegment(part string) NamedSegment {
 		return np
 	}
 
-	return &namedSegment{name: part}
+	return segment(part)
+
+}
+
+type segment string
+
+func (s segment) ParamString() string {
+	return string(s)
+}
+
+type NamedSegment interface {
+	Segment
+	ParamName() string
+	Multiple() bool
 }
 
 type namedSegment struct {
@@ -65,7 +66,7 @@ func ParseSegments(p string) Segments {
 	ss := make(Segments, len(parts))
 
 	for i, part := range parts {
-		if np := NewNamedSegment(part); np != nil {
+		if np := NewSegment(part); np != nil {
 			ss[i] = np
 		}
 	}
@@ -75,19 +76,19 @@ func ParseSegments(p string) Segments {
 
 type Segments []Segment
 
-func (ss Segments) PathValues(name string) (Values, error) {
+func (ss Segments) PathValues(resource string) (Values, error) {
 	params := Values{}
 
-	_, ok := ss.MatchTo(params, name)
+	_, ok := ss.MatchTo(params, resource)
 	if !ok {
-		return nil, fmt.Errorf("pathname %s is not match %s", name, ss)
+		return nil, fmt.Errorf("pathname %s is not match %s", resource, ss.ParamString())
 	}
 
 	return params, nil
 }
 
-func (ss Segments) MatchTo(vm ValuesModifier, name string) (string, bool) {
-	return NewMatcher(ss, "").MatchTo(vm, name)
+func (ss Segments) MatchTo(vm ValuesModifier, res string) (string, bool) {
+	return NewMatcher(ss, "").MatchTo(vm, res)
 }
 
 func (ss Segments) ParamString() string {

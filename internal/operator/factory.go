@@ -67,7 +67,7 @@ func (f *Factory) New() (op Operator) {
 	}
 
 	if x, ok := op.(Initializer); ok {
-		x.InitByOperator(f.Operator)
+		x.InitFromOperator(f.Operator)
 	}
 
 	if x, ok := op.(DefaultSetter); ok {

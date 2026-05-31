@@ -103,17 +103,22 @@ func (s Status) StatusCode() int {
 	return int(s)
 }
 
-func (s Status) Status() string {
+func (s Status) StatusText() string {
 	return s.String()
 }
 
-func (s Status) Wrap(err error) error {
-	if err == nil || IsOK(s) {
-		return nil
-	}
-	return status.WrapStatus(err, s)
+func (s Status) IsValid() bool {
+	return s > 0
 }
 
-func IsOK(v Status) bool {
-	return v >= STATUS__OK && v < STATUS__MULTIPLE_CHOICES
+func (s Status) Wrap(err error) error {
+	if err == nil || IsStatusOK(s) {
+		return nil
+	}
+	return status.Wrap(err, s)
+}
+
+func IsStatusOK[Code ~int](v Code) bool {
+	i := int(v)
+	return i >= http.StatusOK && i < http.StatusMultipleChoices
 }

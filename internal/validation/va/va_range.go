@@ -22,7 +22,7 @@ func NewRangeVa[T Numeric](r rule.Rule) (*RangeVa[T], error) {
 
 	vr := &RangeVa[T]{exMin: exl, exMax: exr}
 	if !rule.IsNil(minimum) {
-		v, err := ParseValue[T](minimum.String())
+		v, err := ParseEnumValue[T](minimum.String())
 		if err != nil {
 			return nil, codex.Wrapf(ERROR__INVALID_VALUE_RANGE, err, "expect type %s, got %s", reflect.TypeFor[T](), minimum.String())
 		}
@@ -30,7 +30,7 @@ func NewRangeVa[T Numeric](r rule.Rule) (*RangeVa[T], error) {
 	}
 
 	if !rule.IsNil(maximum) {
-		v, err := ParseValue[T](maximum.String())
+		v, err := ParseEnumValue[T](maximum.String())
 		if err != nil {
 			return nil, codex.Wrapf(ERROR__INVALID_VALUE_RANGE, err, "expect type %s, got %s", reflect.TypeFor[T](), maximum.String())
 		}

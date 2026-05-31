@@ -41,18 +41,18 @@ func (c *_sliceP) New(r rule.Rule) (_ validation.Validator, err error) {
 	if _, ok := params[0].(rule.Rule); !ok {
 		return nil, codex.Errorf(validation.ERROR__SLICE_PARAM, "expect one rule for element")
 	}
-	v.elem.Rule = params[0].(rule.Rule)
+	v.elem = params[0].(rule.Rule)
 
-	return wrap(v, r), nil
+	return v, nil
 }
 
 type Slice struct {
-	elem validation.Option
+	elem rule.Rule
 
 	*va.LengthVa
 }
 
-func (v *Slice) Elem() validation.Option {
+func (v *Slice) ElemRule() rule.Rule {
 	return v.elem
 }
 
@@ -63,7 +63,7 @@ func (v *Slice) Validate(value []byte) error {
 func (v *Slice) String() string {
 	b := rule.NewBuilder("slice")
 
-	b.AddParameters(v.elem.Rule)
+	b.AddParameters(v.elem)
 
 	v.LengthVa.BuiltTo(b)
 

@@ -13,7 +13,7 @@ type Enum interface {
 	Numeric | string
 }
 
-func ParseValue[T Enum](data string) (T, error) {
+func ParseEnumValue[T Enum](data string) (T, error) {
 	var (
 		x   any
 		err error
@@ -60,32 +60,3 @@ func ParseValue[T Enum](data string) (T, error) {
 	}
 	return x.(T), err
 }
-
-// func MinMax[T Numeric]() (minimum, maximum T) {
-// 	switch any(*new(T)).(type) {
-// 	case int:
-// 		return T(int(math.MinInt)), T(int(math.MaxInt))
-// 	case int8:
-// 		return T(int16(math.MinInt16)), T(int16(math.MaxInt16))
-// 	case int16:
-// 		return T(int16(math.MinInt16)), T(int16(math.MaxInt16))
-// 	case int32:
-// 		return T(int32(math.MinInt32)), T(int32(math.MaxInt32))
-// 	case int64:
-// 		return T(int64(math.MinInt64)), T(int64(math.MaxInt64))
-// 	case uint:
-// 		return T(uint(0)), T(uint(math.MaxUint))
-// 	case uint8:
-// 		return T(uint8(0)), T(uint8(math.MaxUint8))
-// 	case uint16:
-// 		return T(uint16(0)), T(uint16(math.MaxUint16))
-// 	case uint32:
-// 		return T(uint32(0)), T(uint32(math.MaxUint32))
-// 	case uint64:
-// 		return T(uint64(0)), T(uint64(math.MaxUint64))
-// 	case float32:
-// 		return T(float32(math.SmallestNonzeroFloat32)), T(float32(math.MaxFloat32))
-// 	default:
-// 		return T(float64(math.SmallestNonzeroFloat64)), T(float64(math.MaxFloat32))
-// 	}
-// }

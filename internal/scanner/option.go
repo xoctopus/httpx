@@ -20,9 +20,13 @@ func parseFieldOptions(sf reflect.StructField, prefix string) (FieldOptions, boo
 		}
 	}
 
-	tag := reflectx.ParseTag(sf.Tag, ':')
+	tag := reflectx.ParseTag(
+		sf.Tag,
+		reflectx.WithOptionSplitter(':'),
+		reflectx.WithExpectFlags("json", "name"),
+	)
 
-	flag := cmp.Or(tag.Get("json"), tag.Get("name"))
+	flag := cmp.Or(tag.Get("name"), tag.Get("json"))
 	var (
 		options *FieldOptions
 		ignored bool
@@ -79,19 +83,25 @@ func parseFieldOptions(sf reflect.StructField, prefix string) (FieldOptions, boo
 	return *options, ignored, nil
 }
 
-// FieldOptions see encoding/json/v2.fieldOptions
+// FieldOptions see encoding/json/v2.fieldOptions.
+// nameNeedEscape is unsupported
 type FieldOptions struct {
 	Name       string
 	HasName    bool
 	Casing     Casing
 	Inline     bool
 	Unknown    bool
-	Embedded   bool
 	Omitzero   bool
 	Omitempty  bool
 	String     bool
 	Format     string
 	StringItem bool
+
+	// Embedded not in v2.fieldOptions. for parsing duplicated query kvs
+	// eg: createdAt.gt=x&createdAt.lte=y&updatedAt.gt=x&updatedAt.lte=y
+	// the gt, lte in createdAt and updatedAt is same type but prefix.
+	// This is a temporary plan
+	Embedded bool
 }
 
 func (o *FieldOptions) StrictCase() bool {

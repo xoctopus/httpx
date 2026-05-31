@@ -3,6 +3,7 @@ package confhttp
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"path"
@@ -11,8 +12,8 @@ import (
 
 	"github.com/xoctopus/httpx/internal/client"
 	"github.com/xoctopus/httpx/internal/status"
-	"github.com/xoctopus/httpx/internal/transport"
 	"github.com/xoctopus/httpx/pkg/httpx"
+	"github.com/xoctopus/httpx/pkg/httpx/transport"
 )
 
 type Transport = func(rt http.RoundTripper) http.RoundTripper
@@ -49,7 +50,7 @@ func (c *Client) Do(ctx context.Context, vreq any, metas ...httpx.Metadata) http
 		if err != nil {
 			return &result{
 				client: c,
-				err:    status.WrapStatus(err, httpx.STATUS__INTERNAL_SERVER_ERROR),
+				err:    status.Wrap(err, httpx.STATUS__INTERNAL_SERVER_ERROR),
 			}
 		}
 		req = r
@@ -72,12 +73,12 @@ func (c *Client) Do(ctx context.Context, vreq any, metas ...httpx.Metadata) http
 		if errors.Is(err, context.Canceled) {
 			return &result{
 				client: c,
-				err:    status.WrapStatus(err, httpx.STATUS__CLIENT_CLOSED_REQUEST),
+				err:    status.Wrap(err, httpx.STATUS__CLIENT_CLOSED_REQUEST),
 			}
 		}
 		return &result{
 			client: c,
-			err:    status.WrapStatus(err, httpx.STATUS__INTERNAL_SERVER_ERROR),
+			err:    status.Wrap(err, httpx.STATUS__INTERNAL_SERVER_ERROR),
 		}
 	}
 
@@ -94,7 +95,10 @@ func (c *Client) newreq(ctx context.Context, r any, metas ...httpx.Metadata) (*h
 
 	req, err := transport.NewRequest(ctx, r)
 	if err != nil {
-		return nil, status.Wrap(err, http.StatusBadRequest, "NewRequestFailed")
+		return nil, status.Wrap(
+			fmt.Errorf("failed to new request: %w", err),
+			httpx.STATUS__BAD_REQUEST,
+		)
 	}
 
 	// as default endpoint schema, host and path

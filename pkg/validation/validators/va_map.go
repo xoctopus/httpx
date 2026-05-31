@@ -32,34 +32,47 @@ func (c *_mapP) New(r rule.Rule) (_ validation.Validator, err error) {
 	}
 
 	params := r.Parameters()
+	if len(params) == 0 {
+		return v, nil
+	}
+
 	if len(params) != 2 {
 		return nil, codex.Errorf(validation.ERROR__MAP_PARAM, "expect 2 parameters for key and value")
 	}
-	_, ok1 := params[0].(rule.Rule)
-	_, ok2 := params[2].(rule.Rule)
-	if !ok1 || !ok2 {
+	kr, vr := false, false
+	v.keyRule, kr = params[0].(rule.Rule)
+	v.eleRule, vr = params[1].(rule.Rule)
+	if !kr || !vr {
 		return nil, codex.Errorf(validation.ERROR__MAP_PARAM, "expect rule parameters for key and value")
 	}
 
-	v.key.Rule = params[0].(rule.Rule)
-	v.ele.Rule = params[1].(rule.Rule)
+	v.keyRule = params[0].(rule.Rule)
+	v.eleRule = params[1].(rule.Rule)
 
-	return wrap(v, r), nil
+	return v, nil
 }
 
 type Map struct {
-	key validation.Option
-	ele validation.Option
+	keyRule rule.Rule
+	eleRule rule.Rule
 
 	*va.LengthVa
 }
 
-func (v *Map) Key() validation.Option {
-	return v.key
+func (v *Map) KeyRule() rule.Rule {
+	return v.keyRule
 }
 
-func (v *Map) Elem() validation.Option {
-	return v.ele
+func (v *Map) SetKeyRule(r rule.Rule) {
+	v.keyRule = r
+}
+
+func (v *Map) ElemRule() rule.Rule {
+	return v.eleRule
+}
+
+func (v *Map) SetElemRule(r rule.Rule) {
+	v.eleRule = r
 }
 
 func (v *Map) Validate(_ []byte) error {
@@ -69,8 +82,8 @@ func (v *Map) Validate(_ []byte) error {
 func (v *Map) String() string {
 	b := rule.NewBuilder("map")
 
-	b.AddParameters(v.key.Rule)
-	b.AddParameters(v.ele.Rule)
+	b.AddParameters(v.keyRule)
+	b.AddParameters(v.eleRule)
 
 	v.LengthVa.BuiltTo(b)
 

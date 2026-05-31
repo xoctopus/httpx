@@ -39,14 +39,14 @@
 //	}
 //
 // Request meta:
-// 1. `in` tag describes data location. see: payload.Locations
+// 1. `in` tag describes data location. eg: path, query, header, cookie, body
 // 2. `name` tag describes data key.
-// 3. `path` tag describes route path.
+// 3. `path` tag describes route path. eg: GET /api/v0/user/{userID}
 // 4. json/v2 tag extension is supported. eg: inline, unknown, string, format etc.
 //
 // eg: request content
 // GET /org/1001/user/8888?direct=true&q0=1010&q1=active HTTP/1.1
-// Host: api.yourgateway.com
+// Host: api.yourservice.com
 // k1: 200
 // k2: high-priority
 // Cookie: token=abc_session_99; userdata=gold_member

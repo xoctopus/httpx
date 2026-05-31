@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/xoctopus/logx"
+	"golang.org/x/sync/errgroup"
 )
 
 func New(typ string) Content {
@@ -18,12 +19,12 @@ func NewFrom(media string, param map[string]string) Content {
 	return New(mime.FormatMediaType(media, param))
 }
 
-func NewBuilder() Builder {
-	return &content{len: -1}
+func NewBuilder(media string) Builder {
+	return &content{typ: media, len: -1}
 }
 
 func NewBuilderFrom(media string, param map[string]string) Builder {
-	return &content{typ: mime.FormatMediaType(media, param)}
+	return NewBuilder(mime.FormatMediaType(media, param))
 }
 
 type content struct {
@@ -32,23 +33,19 @@ type content struct {
 	io.ReadCloser
 }
 
-func (c content) Type() string {
-	return c.typ
-}
-
 func (c content) ContentType() string {
 	return c.typ
 }
 
-func (c *content) SetContentType(typ string) {
-	c.typ = typ
+func (c *content) SetContentType(t string) {
+	c.typ = t
 }
 
-func (c content) Length() int64 {
+func (c content) ContentLength() int64 {
 	return c.len
 }
 
-func (c *content) SetLength(n int64) {
+func (c *content) SetContentLength(n int64) {
 	c.len = n
 }
 
@@ -66,16 +63,36 @@ func (c *content) ApplyHeader(h http.Header) {
 }
 
 func AsReadCloser(ctx context.Context, factory func(w io.WriteCloser) func() error) io.ReadCloser {
-	var (
-		pr, pw = io.Pipe()
-		write  = factory(pw)
-	)
+	pr, pw := io.Pipe()
+	w := factory(pw)
 
 	go func() {
-		if err := write(); err != nil {
+		if err := w(); err != nil {
 			logx.From(ctx).Error(err)
 		}
 	}()
 
 	return pr
+}
+
+func Pipe(r func(r io.Reader) error, w func(w io.Writer) error) error {
+	pr, pw := io.Pipe()
+
+	eg := &errgroup.Group{}
+
+	eg.Go(func() (err error) {
+		defer func() {
+			_ = pr.CloseWithError(err)
+		}()
+		return r(pr)
+	})
+
+	eg.Go(func() (err error) {
+		defer func() {
+			_ = pw.CloseWithError(err)
+		}()
+		return w(pw)
+	})
+
+	return eg.Wait()
 }

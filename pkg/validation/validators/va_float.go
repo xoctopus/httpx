@@ -51,7 +51,7 @@ func (p *_floatP) New(r rule.Rule) (_ validation.Validator, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return wrap(v, r), nil
+	return v, nil
 }
 
 type Float struct {
@@ -76,7 +76,7 @@ func (v *Float) String() string {
 
 func (v *Float) Validate(value []byte) error {
 	if k := jsontext.Value(value).Kind(); k != jsontext.NUMBER {
-		return codex.Errorf(validation.ERROR__INPUT_TYPE, "expect: number got: %s", k)
+		return codex.Errorf(validation.ERROR__INPUT_TYPE, "expect: float number got: %s", k)
 	}
 
 	text := string(value)

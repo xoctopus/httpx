@@ -8,6 +8,8 @@ import (
 
 	"github.com/xoctopus/x/misc/must"
 	"github.com/xoctopus/x/syncx"
+
+	"github.com/xoctopus/httpx/internal/jsonv2/json"
 )
 
 var Structs = &structs{
@@ -19,6 +21,10 @@ type structs struct {
 }
 
 func (v *structs) Scan(typ reflect.Type) (*Struct, error) {
+	for typ.Kind() == reflect.Pointer {
+		typ = typ.Elem()
+	}
+
 	must.BeTrueF(
 		typ.Kind() == reflect.Struct,
 		"invalid input type: %s. expect Struct", typ,
@@ -48,7 +54,7 @@ func scan(root reflect.Type, prefix string) (*Struct, error) {
 		seen    = map[reflect.Type]bool{root: true}
 		index   = 0
 		fields  = make([]*Field, 0)
-		inlined = make([]*Field, 0)
+		inlined = make([]*Field, 0) // inlined fallbacks
 	)
 
 	for index < len(entered) {
@@ -97,7 +103,7 @@ func scan(root reflect.Type, prefix string) (*Struct, error) {
 				continue
 			}
 
-			if fi.Inline || fi.Unknown || fi.Embedded {
+			if fi.Inline || fi.Unknown {
 				tf := f.Type
 				for tf.Kind() == reflect.Pointer && tf.Name() == "" {
 					tf = tf.Elem()
@@ -150,6 +156,13 @@ func scan(root reflect.Type, prefix string) (*Struct, error) {
 		}
 	}
 
+	// type EmbeddedA struct { Extra map[string]any `json:",inline"` }
+	// type EmbeddedB struct { Extra map[string]any `json:",inline"` }
+	//
+	// type Root struct {
+	//     EmbeddedA
+	//     EmbeddedB // oops, EmbeddedA and EmbeddedB in same level with inlined map
+	// }
 	if n := len(inlined); n == 1 || (n > 1 && len(inlined[0].index) != len(inlined[1].index)) {
 		fs.inlined = inlined[0]
 	}
@@ -192,6 +205,16 @@ func (f *Field) GetOrNewAt(v reflect.Value) reflect.Value {
 	return v
 }
 
+// PatchOptions next options inherited from o and patched by f's attributes
+func (f *Field) PatchOptions(o ...json.Options) (next json.Options) {
+	next = json.JoinOptions(o...)
+	if f.String {
+		next = json.JoinOptions(next, json.StringifyNumbers(true))
+	}
+	// TODO maybe other options for patching
+	return next
+}
+
 type Struct struct {
 	flattened []*Field
 	names     map[string]*Field
@@ -204,8 +227,13 @@ func (fs *Struct) Len() int {
 	return len(fs.flattened)
 }
 
-func (fs *Struct) Lookup(loc, name string) (*Field, bool) {
-	f, ok := fs.locates[locate{loc, name}]
+func (fs *Struct) Lookup(name string) (*Field, bool) {
+	f, ok := fs.names[name]
+	return f, ok
+}
+
+func (fs *Struct) LookupIn(in, name string) (*Field, bool) {
+	f, ok := fs.locates[locate{in, name}]
 	return f, ok
 }
 

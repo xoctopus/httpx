@@ -25,35 +25,46 @@ import (
 	"github.com/xoctopus/httpx/internal/validation"
 )
 
-type Request = request.Request
-
-type ValueIterator interface {
+type Arshaler interface {
+	Type() reflect.Type
 	Values(*scanner.Field) iter.Seq[reflect.Value]
-}
-
-type MutableValueIterator interface {
 	ValuesForModification(*scanner.Field, int) iter.Seq2[int, reflect.Value]
-}
 
-type ValueMarshaler interface {
 	MarshalValues(ctx context.Context, f *scanner.Field) (values []string, err error)
-}
-
-type ValueUnmarshaler interface {
 	UnmarshalValues(ctx context.Context, f *scanner.Field, values []string) error
-}
-
-type ReaderUnmarshaler interface {
 	UnmarshalReaders(ctx context.Context, f *scanner.Field, readers []io.ReadCloser) error
-}
 
-type RequestMarshaler interface {
 	MarshalRequest(ctx context.Context, method string, segments path.Segments) (*http.Request, error)
+	UnmarshalRequest(r request.Request) error
+	UnmarshalUnderlyingRequest(*http.Request) error
 }
 
-type RequestUnmarshaler interface {
-	UnmarshalUnderlying(*http.Request) error
-	UnmarshalRequest(r Request) error
+func NewRequest(ctx context.Context, method, path_ string, payload any) (*http.Request, error) {
+	rv := reflect.ValueOf(payload)
+	for rv.Kind() == reflect.Pointer {
+		rv = rv.Elem()
+	}
+	return NewArshaler(rv).MarshalRequest(ctx, method, path.ParseSegments(path_))
+}
+
+func UnmarshalUnderlyingRequest(req *http.Request, x any) error {
+	rv := reflect.ValueOf(x)
+	if rv.Kind() != reflect.Pointer {
+		return fmt.Errorf("unmarshal target MUST be a pointer value")
+	}
+	return NewArshaler(rv.Elem()).UnmarshalUnderlyingRequest(req)
+}
+
+func UnmarshalRequest(req request.Request, x any) error {
+	rv := reflect.ValueOf(x)
+	if rv.Kind() != reflect.Pointer {
+		return fmt.Errorf("unmarshal target MUST be a pointer value")
+	}
+	return NewArshaler(rv).UnmarshalRequest(req)
+}
+
+func NewArshaler(v reflect.Value) Arshaler {
+	return &parameter{v}
 }
 
 type parameter struct {
@@ -158,9 +169,9 @@ func (p *parameter) UnmarshalReaders(ctx context.Context, f *scanner.Field, read
 		}
 
 		if f.Multiple() {
-			return validation.WrapPosition(err, fmt.Sprintf("%s.%d", f.FieldName, i))
+			return validation.WrapPositionError(err, fmt.Sprintf("%s.%d", f.FieldName, i))
 		}
-		return validation.WrapPosition(err, f.FieldName)
+		return validation.WrapPositionError(err, f.FieldName)
 	}
 	return nil
 }
@@ -268,13 +279,13 @@ func (p *parameter) MarshalRequest(ctx context.Context, method string, segments 
 		return nil, err
 	}
 	if body != nil {
-		if t := body.Type(); t != "" {
+		if t := body.ContentType(); t != "" {
 			header.Set("Content-Type", t)
 		}
 
-		if l := body.Length(); l > -1 {
-			req.ContentLength = l
-			header.Set("Content-Length", strconv.FormatInt(l, 10))
+		if n := body.ContentLength(); n > -1 {
+			req.ContentLength = n
+			header.Set("Content-Length", strconv.FormatInt(n, 10))
 		}
 	}
 	req.Header = header
@@ -317,7 +328,7 @@ func (p *parameter) MarshalRequest(ctx context.Context, method string, segments 
 	return req, err
 }
 
-func (p *parameter) UnmarshalUnderlying(r *http.Request) error {
+func (p *parameter) UnmarshalUnderlyingRequest(r *http.Request) error {
 	return p.UnmarshalRequest(request.From(r))
 }
 
@@ -352,7 +363,7 @@ func (p *parameter) UnmarshalRequest(r request.Request) error {
 			}
 
 			if err != nil {
-				return validation.WrapLocationPosition(err, loc, f.Name)
+				return validation.WrapPositionError(validation.WrapLocationError(err, loc), f.Name)
 			}
 		}
 	}

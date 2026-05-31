@@ -10,7 +10,10 @@
 			"_genx_",
 			"main.go",
 			"testing.go",
-			"example/"
+			"exports.go",
+			"example/",
+			"testutil/",
+			"testdata/"
 		],
 		"format_ignore": [
 			".git/",

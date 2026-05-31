@@ -1,4 +1,4 @@
-package validators
+package validation
 
 import (
 	"reflect"
@@ -6,20 +6,23 @@ import (
 	"github.com/xoctopus/x/codex"
 
 	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
-	"github.com/xoctopus/httpx/internal/validation"
 	"github.com/xoctopus/httpx/internal/validation/rule"
 )
 
-func wrap(v validation.Validator, r rule.Rule) validation.Validator {
+func wrap(v Validator, r rule.Rule) Validator {
+	optional, defaults := true, []byte("")
+	if r != nil {
+		optional, defaults = r.Optional(), r.Defaults().Bytes()
+	}
 	return &wrapped{
 		Validator: v,
-		optional:  r.Optional(),
-		defaults:  r.Defaults().Bytes(),
+		optional:  optional,
+		defaults:  defaults,
 	}
 }
 
 type wrapped struct {
-	validation.Validator
+	Validator
 	optional bool
 	defaults []byte
 }
@@ -36,29 +39,29 @@ func (o *wrapped) String() string {
 }
 
 func (o *wrapped) PostValidate(rv reflect.Value) error {
-	if post, ok := o.Validator.(validation.PostValidator); ok {
+	if post, ok := o.Validator.(PostValidator); ok {
 		return post.PostValidate(rv)
 	}
 	return nil
 }
 
-func (o *wrapped) Elem() validation.Option {
-	if post, ok := o.Validator.(validation.WithElem); ok {
-		return post.Elem()
+func (o *wrapped) ElemRule() rule.Rule {
+	if x, ok := o.Validator.(WithElemRule); ok {
+		return x.ElemRule()
 	}
-	return validation.Option{}
+	return nil
 }
 
-func (o *wrapped) Key() validation.Option {
-	if post, ok := o.Validator.(validation.WithKey); ok {
-		return post.Key()
+func (o *wrapped) KeyRule() rule.Rule {
+	if x, ok := o.Validator.(WithKeyRule); ok {
+		return x.KeyRule()
 	}
-	return validation.Option{}
+	return nil
 }
 
 func (o *wrapped) Validate(value []byte) error {
 	if jsontext.Value(value).Kind() == jsontext.NULL && !o.optional {
-		return codex.New(validation.ERROR__MISSING_REQUIRED)
+		return codex.New(ERROR__MISSING_REQUIRED)
 	}
 	if o.Validator == nil {
 		return nil

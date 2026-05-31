@@ -29,7 +29,7 @@ type Writer interface {
 type Response[T any] interface {
 	Underlying() T
 
-	content.Describer
+	content.MediaTypeDescriber
 	status.Describer
 	cookie.Describer
 	metadata.Carrier
@@ -39,7 +39,7 @@ type Error interface {
 	Error() string
 	Unwrap() error
 
-	content.Describer
+	content.MediaTypeDescriber
 	status.Describer
 	cookie.Describer
 	metadata.Carrier
@@ -66,8 +66,8 @@ func (r *response[T]) Cookies() []*http.Cookie {
 	return r.cookies
 }
 
-func (r *response[T]) SetStatusCode(status int) {
-	r.status = status
+func (r *response[T]) SetStatusCode(code int) {
+	r.status = code
 }
 
 func (r *response[T]) SetContentType(media string) {
@@ -170,9 +170,8 @@ func (r *response[T]) WriteResponse(ctx context.Context, rw http.ResponseWriter,
 
 	if r.cookies != nil {
 		for i := range r.cookies {
-			cookie := r.cookies[i]
-			if cookie != nil {
-				http.SetCookie(rw, cookie)
+			if ci := r.cookies[i]; ci != nil {
+				http.SetCookie(rw, ci)
 			}
 		}
 	}
@@ -215,7 +214,7 @@ func (r *response[T]) WriteResponse(ctx context.Context, rw http.ResponseWriter,
 		}
 		defer func() { _ = c.Close() }()
 
-		if x, ok := c.(content.Applier); ok {
+		if x, ok := c.(content.HeaderApplier); ok {
 			x.ApplyHeader(rw.Header())
 		}
 
@@ -248,7 +247,8 @@ func (e ErrorResponse) Unwrap() error {
 type Modifier interface {
 	status.Modifier
 	redirect.Modifier
-	content.Modifier
+	content.MediaTypeModifier
+	content.LengthModifier
 	cookie.Modifier
 	metadata.Modifier
 }

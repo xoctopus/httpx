@@ -7,10 +7,11 @@ import (
 )
 
 type (
-	Content          = content.Content
-	ContentReader    = content.Reader
-	ContentProvider  = content.Provider
-	ContentDescriber = content.Describer
+	Content                   = content.Content
+	ContentReader             = content.Reader
+	ContentProvider           = content.Provider
+	ContentMediaTypeDescriber = content.MediaTypeDescriber
+	ContentLengthDescriber    = content.LengthDescriber
 
 	Transformer         = transformer.Transformer
 	TransformerProvider = transformer.Provider

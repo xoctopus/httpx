@@ -25,11 +25,13 @@ type NoOutput interface {
 }
 
 type Newer interface {
+	Operator
 	New() Operator
 }
 
 type Initializer interface {
-	InitByOperator(Operator)
+	Operator
+	InitFromOperator(Operator)
 }
 
 type DefaultSetter interface {
@@ -46,7 +48,7 @@ type HasContextKey interface {
 }
 
 type HasMiddlewares interface {
-	Middles() []Operator
+	Middlewares() []Operator
 }
 
 type EmptyOperator struct {

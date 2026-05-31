@@ -1,64 +1,11 @@
 package status
 
 import (
-	"iter"
 	"net/http"
 	"strconv"
 
 	"github.com/xoctopus/x/slicex"
 )
-
-func Iter(err error) iter.Seq[error] {
-	return func(yield func(error) bool) {
-		if err == nil {
-			return
-		}
-
-		switch x := err.(type) {
-		case Describer:
-			if !(yield(err)) {
-				return
-			}
-		case HasPosition:
-			if !(yield(err)) {
-				return
-			}
-		case interface{ Unwrap() error }:
-			if _, ok := err.(HasLocation); ok {
-				if !(yield(err)) {
-					return
-				}
-			}
-
-			err = x.Unwrap()
-			if err == nil {
-				return
-			}
-
-			for e := range Iter(err) {
-				if !(yield(e)) {
-					return
-				}
-			}
-		case interface{ Unwrap() []error }:
-			for _, ee := range x.Unwrap() {
-				if ee == nil {
-					continue
-				}
-				for e := range Iter(ee) {
-					if !(yield(e)) {
-						return
-					}
-				}
-			}
-		default:
-			if !(yield(err)) {
-				return
-			}
-		}
-	}
-
-}
 
 func AsErrorResponse(err error, source string) *ErrorResponse {
 	if err == nil {
@@ -69,7 +16,7 @@ func AsErrorResponse(err error, source string) *ErrorResponse {
 
 	loc := ""
 
-	for e := range Iter(err) {
+	for e := range ErrorsFrom(err) {
 		if x, ok := e.(HasLocation); ok {
 			loc = x.Location()
 			continue
@@ -78,11 +25,11 @@ func AsErrorResponse(err error, source string) *ErrorResponse {
 		ee := AsDescription(e, source, loc)
 		if er == nil {
 			er = &ErrorResponse{
-				Code: ee.Status,
+				Code: ee.Status.StatusCode(),
 				Msg:  ee.Message,
 			}
-			if ee.Status == http.StatusBadRequest {
-				er.Msg = http.StatusText(ee.Status)
+			if ee.Status.StatusCode() == http.StatusBadRequest {
+				er.Msg = ee.Status.StatusText()
 			}
 		}
 

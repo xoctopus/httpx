@@ -149,6 +149,14 @@ func init() { validation.Register(HostnameRFC952RegexProvider) }
 
 var HostnameRFC952RegexProvider = validators.NewRegexpProvider(regexHostnameRFC952, "hostnameRfc952", "")
 
+func init() { validation.Register(Ipv4RegexProvider) }
+
+var Ipv4RegexProvider = validators.NewRegexpProvider(regexIpv4, "ipv4", "")
+
+func init() { validation.Register(Ipv6RegexProvider) }
+
+var Ipv6RegexProvider = validators.NewRegexpProvider(regexIpv6, "ipv6", "")
+
 func init() { validation.Register(Isbn10RegexProvider) }
 
 var Isbn10RegexProvider = validators.NewRegexpProvider(regexIsbn10, "isbn10", "")

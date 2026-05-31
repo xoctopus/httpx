@@ -33,7 +33,7 @@ func NewRouter(operators ...Operator) Router {
 				op := operators[i]
 
 				if x, ok := op.(operator.HasMiddlewares); ok {
-					for _, o := range x.Middles() {
+					for _, o := range x.Middlewares() {
 						if !yield(o) {
 							return
 						}

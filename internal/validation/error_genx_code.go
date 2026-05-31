@@ -25,5 +25,7 @@ func (e Error) Message() string {
 		return "[validation.Error:6] invalid input: invalid value"
 	case ERROR__MISSING_REQUIRED:
 		return "[validation.Error:7] invalid input: missing required"
+	case ERROR__UNREGISTERED_RULE:
+		return "[validation.Error:8] unregistered rule"
 	}
 }

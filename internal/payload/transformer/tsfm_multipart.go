@@ -74,7 +74,7 @@ func (t *multipartT) Into(ctx context.Context, r io.ReadCloser, v any) error {
 		return errors.New("target must be pointer value")
 	}
 
-	pv := &parameter{Value: rv.Elem()}
+	pv := NewArshaler(rv.Elem())
 
 	s, err := scanner.Structs.Scan(pv.Type())
 	if err != nil {
@@ -101,6 +101,7 @@ func (t *multipartT) Into(ctx context.Context, r io.ReadCloser, v any) error {
 			if err = pv.UnmarshalReaders(ctx, sf, readers); err != nil {
 				return err
 			}
+			continue
 		}
 
 		if err = pv.UnmarshalValues(ctx, sf, form.Value[sf.Name]); err != nil {
@@ -112,9 +113,8 @@ func (t *multipartT) Into(ctx context.Context, r io.ReadCloser, v any) error {
 }
 
 func (t *multipartT) Prepare(ctx context.Context, v any) (content.Content, error) {
-	b := content.NewBuilder()
+	b := content.NewBuilder(t.media)
 
-	b.SetContentType(t.media)
 	b.SetReadCloser(content.AsReadCloser(ctx, func(w io.WriteCloser) func() error {
 		mw := multipart.NewWriter(w)
 		b.SetContentType(mw.FormDataContentType())
@@ -131,7 +131,7 @@ func (t *multipartT) Prepare(ctx context.Context, v any) (content.Content, error
 				rv = rv.Elem()
 			}
 
-			pv := parameter{Value: rv}
+			pv := NewArshaler(rv)
 			s, err := scanner.Structs.Scan(pv.Type())
 			if err != nil {
 				return err
@@ -161,27 +161,24 @@ func (t *multipartT) Prepare(ctx context.Context, v any) (content.Content, error
 					if err != nil {
 						return err
 					}
-					if ct := c.Type(); ct != "" {
+					if ct := c.ContentType(); ct != "" {
 						header.Set("Content-Type", ct)
 					}
-					if x, ok := fv.(interface{ ContentType() string }); ok {
+					if x, ok := fv.(content.MediaTypeDescriber); ok {
 						header.Set("Content-Type", x.ContentType())
 					}
-					if i := c.Length(); i > -1 {
-						header.Set("Content-Length", strconv.FormatInt(i, 10))
+					if n := c.ContentLength(); n > -1 {
+						header.Set("Content-Length", strconv.FormatInt(n, 10))
 					}
-					if x, ok := fv.(interface{ ContentLength() int }); ok {
-						if i := x.ContentLength(); i > -1 {
-							header.Set("Content-Length", strconv.Itoa(i))
-						}
-					}
-					p, err := mw.CreatePart(header)
+					var pw io.Writer
+					pw, err = mw.CreatePart(header)
 					if err != nil {
 						return err
 					}
-					if _, err := io.Copy(p, c); err != nil {
+					if _, err = io.Copy(pw, c); err != nil {
 						return err
 					}
+
 				}
 			}
 			return mw.Close()

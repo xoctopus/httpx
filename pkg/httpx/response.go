@@ -23,9 +23,15 @@ func WithCookies(cookies ...*http.Cookie) ResponseApplier {
 	}
 }
 
-func WithContentType(contentType string) ResponseApplier {
+func WithContentType(t string) ResponseApplier {
 	return func(m response.Modifier) {
-		m.SetContentType(contentType)
+		m.SetContentType(t)
+	}
+}
+
+func WithContentLength(n int64) ResponseApplier {
+	return func(m response.Modifier) {
+		m.SetContentLength(n)
 	}
 }
 

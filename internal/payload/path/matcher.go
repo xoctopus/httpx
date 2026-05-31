@@ -1,12 +1,11 @@
 package path
 
 import (
-	"fmt"
 	"strings"
 )
 
 type Matcher interface {
-	MatchTo(m ValuesModifier, name string) (string, bool)
+	MatchTo(m ValuesModifier, uri string) (string, bool)
 }
 
 func NewMatcher(ss Segments, prefix string) Matcher {
@@ -20,12 +19,12 @@ func NewMatcher(ss Segments, prefix string) Matcher {
 	for i, s := range ss {
 		m.Segments = append(m.Segments, s)
 
-		// not last
+		// net/http/pattern.go named multiple pattern should be the last one?
 		if i != n-1 {
 			if np, ok := s.(NamedSegment); ok && np.Multiple() {
 				return &composedMatcher{
-					l: m,
-					r: NewMatcher(ss[i+1:], np.ParamName()),
+					head: m,
+					tail: NewMatcher(ss[i+1:], np.ParamName()),
 				}
 			}
 		}
@@ -39,15 +38,15 @@ type matcher struct {
 	prefix string
 }
 
-func (pm *matcher) MatchTo(vm ValuesModifier, name string) (string, bool) {
-	parts := SplitPath(name)
+func (pm *matcher) MatchTo(vm ValuesModifier, uri string) (string, bool) {
+	parts := SplitPath(uri)
 
 	segn := len(pm.Segments)
 	if len(parts) < segn {
 		return "", false
 	}
 
-	strictPrefix := pm.prefix == ""
+	strict := pm.prefix == ""
 
 	offset := 0
 
@@ -77,7 +76,7 @@ func (pm *matcher) MatchTo(vm ValuesModifier, name string) (string, bool) {
 		}
 
 		if s.ParamString() != part {
-			if strictPrefix {
+			if strict {
 				return "", false
 			}
 			offset++
@@ -93,18 +92,14 @@ func (pm *matcher) MatchTo(vm ValuesModifier, name string) (string, bool) {
 }
 
 type composedMatcher struct {
-	l Matcher
-	r Matcher
+	head Matcher
+	tail Matcher
 }
 
-func (c *composedMatcher) String() string {
-	return fmt.Sprintf("%s => %s", c.l, c.r)
-}
-
-func (c *composedMatcher) MatchTo(m ValuesModifier, name string) (string, bool) {
-	remain, ok := c.l.MatchTo(m, name)
+func (c *composedMatcher) MatchTo(m ValuesModifier, uri string) (string, bool) {
+	remain, ok := c.head.MatchTo(m, uri)
 	if !ok {
 		return "", ok
 	}
-	return c.r.MatchTo(m, remain)
+	return c.tail.MatchTo(m, remain)
 }

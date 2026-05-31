@@ -38,7 +38,7 @@ type Ranger[T comparable] struct {
 }
 
 type InHeader struct {
-	V1 int    `in:"header" name:"k1"`
+	V1 int    `in:"header" name:"k1,string"`
 	V2 string `in:"header" name:"k2"`
 }
 

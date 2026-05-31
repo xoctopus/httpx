@@ -65,7 +65,7 @@ func (p *_integerP) New(r rule.Rule) (validation.Validator, error) {
 	if v.MultipleVa, err = va.NewMultipleVa[int64](r); err != nil {
 		return nil, err
 	}
-	return wrap(v, r), nil
+	return v, nil
 }
 
 type Int[T int64 | uint64] struct {
@@ -93,7 +93,7 @@ func (v *Int[T]) String() string {
 func (v *Int[T]) Validate(value []byte) error {
 	k := jsontext.Value(value).Kind()
 	if k != jsontext.NUMBER {
-		return codex.Errorf(validation.ERROR__INPUT_TYPE, "expect: number got: %s", k)
+		return codex.Errorf(validation.ERROR__INPUT_TYPE, "expect: integer number got: %s", k)
 	}
 
 	x := *new(T)

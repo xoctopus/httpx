@@ -12,7 +12,7 @@ import (
 func NewLengthVa(r rule.Rule) (*LengthVa, error) {
 	if r.LengthMode() {
 		if x, _ := r.Min(); !rule.IsNil(x) {
-			length, err := ParseValue[uint](x.String())
+			length, err := ParseEnumValue[uint](x.String())
 			if err != nil {
 				return nil, codex.Wrapf(ERROR__INVALID_LENGTH_RANGE, err, "got %s", x)
 			}
@@ -29,14 +29,14 @@ func NewLengthVa(r rule.Rule) (*LengthVa, error) {
 
 	lr := &LengthVa{min: 0, exMin: exl, exMax: exr}
 	if !rule.IsNil(minimum) {
-		v, err := ParseValue[uint](minimum.String())
+		v, err := ParseEnumValue[uint](minimum.String())
 		if err != nil {
 			return nil, codex.Wrapf(ERROR__INVALID_LENGTH_RANGE, err, "got %s", minimum)
 		}
 		lr.min = v
 	}
 	if !rule.IsNil(maximum) {
-		v, err := ParseValue[uint](maximum.String())
+		v, err := ParseEnumValue[uint](maximum.String())
 		if err != nil {
 			return nil, codex.Wrapf(ERROR__INVALID_LENGTH_RANGE, err, "got %s", minimum)
 		}

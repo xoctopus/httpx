@@ -34,16 +34,16 @@ func (p *jsonT) Media() string {
 	return p.media
 }
 
-func (p *jsonT) Into(ctx context.Context, r io.ReadCloser, i any) error {
-	v := scanner.UnwrapField(i)
+func (p *jsonT) Into(ctx context.Context, r io.ReadCloser, v any) error {
 	defer func() { _ = r.Close() }()
 
-	rv, ok := v.(reflect.Value)
+	u := scanner.UnwrapField(v)
+	rv, ok := u.(reflect.Value)
 	if ok {
-		v = rv.Interface()
+		u = rv.Interface()
 	}
 
-	if x, ok := v.(json.Unmarshaler); ok {
+	if x, ok := u.(json.Unmarshaler); ok {
 		raw, err := io.ReadAll(r)
 		if err != nil {
 			return err
@@ -51,7 +51,7 @@ func (p *jsonT) Into(ctx context.Context, r io.ReadCloser, i any) error {
 		return x.UnmarshalJSON(raw)
 	}
 
-	return validation.UnmarshalRead(r, i)
+	return validation.UnmarshalReader(r, u)
 }
 
 func (p *jsonT) Prepare(ctx context.Context, v any) (content.Content, error) {
@@ -62,14 +62,14 @@ func (p *jsonT) Prepare(ctx context.Context, v any) (content.Content, error) {
 		v = rv.Interface()
 	}
 
-	if direct, ok := v.(json.Marshaler); ok {
+	if x, ok := v.(json.Marshaler); ok {
 		// avoid trim \n
-		raw, err := direct.MarshalJSON()
+		raw, err := x.MarshalJSON()
 		if err != nil {
 			return nil, err
 		}
 
-		c.SetLength(int64(len(raw)))
+		c.SetContentLength(int64(len(raw)))
 		c.SetReadCloser(io.NopCloser(bytes.NewBuffer(raw)))
 
 		return c, nil

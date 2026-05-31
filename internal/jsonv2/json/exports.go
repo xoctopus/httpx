@@ -10,6 +10,7 @@ import (
 
 type (
 	Marshaler       = json.Marshaler
+	MarshalerTo     = json.MarshalerTo
 	Unmarshaler     = json.Unmarshaler
 	UnmarshalerFrom = json.UnmarshalerFrom
 	Options         = json.Options
@@ -24,7 +25,10 @@ var (
 	MarshalWrite    = json.MarshalWrite
 	Unmarshal       = json.Unmarshal
 	UnmarshalDecode = json.UnmarshalDecode
-	JoinOptions     = json.JoinOptions
+
+	GetOption        = json.GetOption[bool]
+	JoinOptions      = json.JoinOptions
+	StringifyNumbers = json.StringifyNumbers
 )
 
 func MigrateOmitzero(o []Options) []Options {

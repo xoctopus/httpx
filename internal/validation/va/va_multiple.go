@@ -28,7 +28,7 @@ func NewMultipleVa[T Numeric](r rule.Rule) (*MultipleVa[T], error) {
 	if len(data) == 0 || data[0] != '%' {
 		return nil, nil
 	}
-	div, err := ParseValue[T](string(data[1:]))
+	div, err := ParseEnumValue[T](string(data[1:]))
 	if err != nil {
 		return nil, codex.Wrapf(ERROR__INVALID_MULTIPLE, err, "expect type %s got %s", reflect.TypeFor[T](), string(data[1:]))
 	}

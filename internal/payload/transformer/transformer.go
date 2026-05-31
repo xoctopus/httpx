@@ -22,6 +22,7 @@ type Provider interface {
 }
 
 type Transformer interface {
+	// Media presents transformer media type. eg: json, text, octet etc.
 	Media() string
 
 	content.Reader
@@ -54,7 +55,7 @@ var gTransformers = &transformers{
 
 func (ts *transformers) New(i Option) (Transformer, error) {
 	newer := func() (Transformer, error) {
-		media := i.media()
+		media := i.MediaType()
 		p, ok := ts.providers[media]
 		if !ok {
 			return nil, fmt.Errorf("unknown media type %s to %s", media, i.typ)
@@ -77,19 +78,19 @@ type Option struct {
 	typ    string
 }
 
-func (i *Option) typImpl(dst reflect.Type) bool {
+func (i *Option) TypeImpl(dst reflect.Type) bool {
 	return i.rtyp.Implements(dst)
 }
 
-func (i *Option) ptrImpl(dst reflect.Type) bool {
+func (i *Option) PointerImpl(dst reflect.Type) bool {
 	return reflect.PointerTo(i.rtyp).Implements(dst)
 }
 
-func (i *Option) impl(dst reflect.Type) bool {
-	return i.typImpl(dst) || i.ptrImpl(dst)
+func (i *Option) Implements(dst reflect.Type) bool {
+	return i.TypeImpl(dst) || i.PointerImpl(dst)
 }
 
-func (i *Option) media() string {
+func (i *Option) MediaType() string {
 	media := i.typ
 	if strings.HasSuffix(media, "+json") {
 		media = "json"
@@ -107,18 +108,18 @@ func (i *Option) media() string {
 	if media == "" {
 		switch i.action {
 		case ForMarshalling:
-			if i.impl(tReadCloser) {
+			if i.Implements(tReadCloser) {
 				media = "octet"
-			} else if i.impl(tTextMarshaler) {
+			} else if i.Implements(tTextMarshaler) {
 				media = "plain"
 			}
 		default:
 			must.BeTrue(i.action == ForUnmarshalling)
-			if i.impl(tReadCloser) {
+			if i.Implements(tReadCloser) {
 				media = "octet"
-			} else if i.ptrImpl(tTextUnmarshaler) {
+			} else if i.PointerImpl(tTextUnmarshaler) {
 				media = "plain"
-			} else if i.ptrImpl(tJSONUnmarshaler) {
+			} else if i.PointerImpl(tJSONUnmarshaler) {
 				media = "json"
 			}
 		}

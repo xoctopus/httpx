@@ -35,7 +35,7 @@ func NewEnumVa[T Enum](r rule.Rule) (*EnumVa[T], error) {
 	}
 	es := &EnumVa[T]{mm: make(map[T]struct{})}
 	for _, v := range values {
-		vt, err := ParseValue[T](string(v.Bytes()))
+		vt, err := ParseEnumValue[T](string(v.Bytes()))
 		if err != nil {
 			return nil, codex.Wrapf(ERROR__INVALID_ENUM, err, "expect type %s got %s", reflect.TypeFor[T](), string(v.Bytes()))
 		}

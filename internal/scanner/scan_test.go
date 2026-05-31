@@ -1,41 +1,62 @@
 package scanner_test
 
 import (
-	"encoding/json"
 	"reflect"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/xoctopus/x/slicex"
 	. "github.com/xoctopus/x/testx"
 
+	"github.com/xoctopus/httpx/internal/jsonv2/json"
 	"github.com/xoctopus/httpx/internal/scanner"
 )
 
+// Previewing for json/v2 format feature
 func Test_X(t *testing.T) {
 	d, _ := json.Marshal([]byte("1111"))
-	t.Log(string(d))
+	Expect(t, d, Equal([]byte(`"MTExMQ=="`)))
 
 	b := []byte{}
 	json.Unmarshal(d, &b)
-	t.Log(string(b))
+	Expect(t, b, Equal([]byte(`1111`)))
 
+	// json/v2 format features
+	// will support more format options for variant types and user-defined format options
 	type X struct {
-		V1 int `json:"v1,string,format:bin"`
-		V2 int `json:"v2,string,format:oct"`
-		V3 int `json:"v3,string,format:hex"`
+		Int1 int `json:"int1,string,format:bin"` // "0b11" string option effect json.StringifyNumbers option
+		Int2 int `json:"int2,string,format:oct"` // "0o11"
+		Int3 int `json:"int3,string,format:hex"` // "0x11"
+
+		Time1 time.Time `json:"time1,format:rfc3339"`
+		Time2 time.Time `json:"time2,format:dateonly"`
+		Time3 time.Time `json:"time3,format:timeonly"`
+		// nolint:govet force ignore govet linting
+		// Time4 time.Time `json:"time4,format:'2006-01-02 15:04:05'"`
+
+		Duration1 time.Duration `json:",format:sec"`
+		Duration2 time.Duration `json:",format:nano"`
+		Duration3 time.Duration `json:",format:iso8601"` // PT1H30M 1h30m
+
+		Bytes1 []byte `json:"bytes1,format:base64"`    // default same as v1
+		Bytes2 []byte `json:"bytes2,format:base64url"` // for url
+		Bytes3 []byte `json:"bytes3,format:hex"`       // abcdef123567890
+		Bytes4 []byte `json:"bytes4,format:array"`     // [1,2,3,128]
+
+		ArrayAsNull   []int          `json:"arrayAsNull,format:emitnull"`    // null
+		ArrayAsEmpty  []int          `json:"arrayAsEmpty,format:emitempty"`  // []
+		ObjectAsNull  map[int]string `json:"objectAsNull,format:emitenull"`  // null
+		ObjectAsEmpty map[int]string `json:"objectAsEmpty,format:emitempty"` // {}
 	}
-	var v = X{3, 9, 17}
+	var v = X{}
 	_ = v
-	// json.Marshal(v.V1)  -> expect "0b11"
-	// json.Marshal(v.V2)  -> expect "0o11"
-	// json.Marshal(v.V3)  -> expect "0x11"
 }
 
 func TestScan(t *testing.T) {
 	t.Run("Scan", func(t *testing.T) {
 		ExpectPanic[error](t, func() {
-			scanner.Structs.Scan(reflect.TypeFor[*Testdata]())
+			scanner.Structs.Scan(reflect.TypeFor[*int]())
 		}, ErrorContains("invalid input type"))
 
 		s, err := scanner.Structs.Scan(reflect.TypeFor[Testdata]())
@@ -84,15 +105,18 @@ func TestScan(t *testing.T) {
 
 		inlined, _ := s.Inlined()
 		Expect(t, inlined.FieldName, Equal("Inlined"))
-		lookup, _ := s.Lookup("path", "orgID")
-		Expect(t, lookup.FieldName, Equal("OrgID"))
+		inPathOrgID, _ := s.LookupIn("path", "orgID")
+		Expect(t, inPathOrgID.FieldName, Equal("OrgID"))
+
+		inCookieToken, _ := s.Lookup("token")
+		Expect(t, inCookieToken.FieldName, Equal("Token"))
 	})
 
 	t.Run("Field.GetOrNewAt", func(t *testing.T) {
 		s, _ := scanner.Structs.Scan(reflect.TypeFor[Testdata]())
 
-		q0, _ := s.Lookup("query", "q0")
-		direct, _ := s.Lookup("query", "direct")
+		q0, _ := s.LookupIn("query", "q0")
+		direct, _ := s.LookupIn("query", "direct")
 
 		rv := reflect.ValueOf(Testdata{InQuery: &InQuery{Q0: 100}, Direct: 101})
 		v1 := q0.GetOrNewAt(rv)
@@ -105,5 +129,15 @@ func TestScan(t *testing.T) {
 		v2 = direct.GetOrNewAt(rv)
 		Expect(t, v1.Interface(), Equal[any](0))
 		Expect(t, v2.Interface(), Equal[any](0))
+	})
+
+	t.Run("Field.PatchOptions", func(t *testing.T) {
+		s, _ := scanner.Structs.Scan(reflect.TypeFor[Testdata]())
+		f, _ := s.Lookup("k1")
+
+		// f has string option
+		next := f.PatchOptions(nil)
+		has, _ := json.GetOption(next, json.StringifyNumbers)
+		Expect(t, has, BeTrue())
 	})
 }

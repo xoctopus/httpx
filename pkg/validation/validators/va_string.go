@@ -49,7 +49,7 @@ func (p *_stringP) New(r rule.Rule) (_ validation.Validator, err error) {
 		return nil, codex.Errorf(validation.ERROR__STRING_LENGTH_MODE, "got %s", mode)
 	}
 
-	return wrap(v, r), nil
+	return v, nil
 }
 
 const (
