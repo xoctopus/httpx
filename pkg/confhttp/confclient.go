@@ -4,16 +4,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
+	"reflect"
+	"strings"
 
 	"github.com/xoctopus/x/urlx"
 
 	"github.com/xoctopus/httpx/internal/client"
+	"github.com/xoctopus/httpx/internal/payload/content"
+	"github.com/xoctopus/httpx/internal/payload/metadata"
+	"github.com/xoctopus/httpx/internal/payload/transformer"
+	"github.com/xoctopus/httpx/internal/request"
 	"github.com/xoctopus/httpx/internal/status"
+	"github.com/xoctopus/httpx/internal/transport"
 	"github.com/xoctopus/httpx/pkg/httpx"
-	"github.com/xoctopus/httpx/pkg/httpx/transport"
 )
 
 type Transport = func(rt http.RoundTripper) http.RoundTripper
@@ -122,6 +129,94 @@ type result struct {
 }
 
 func (r *result) Into(v any) (httpx.Metadata, error) {
-	// TODO
-	return nil, nil
+	autoClose := true
+
+	defer func() {
+		if autoClose {
+			if r.Response != nil && r.Response.Body != nil {
+				_ = r.Response.Body.Close()
+			}
+		}
+	}()
+
+	if r.err != nil {
+		return nil, r.err
+	}
+
+	meta := metadata.Metadata(r.Response.Header)
+
+	if !httpx.IsStatusOK(r.Response.StatusCode) {
+		if r.client.NewError != nil {
+			v = r.client.NewError()
+		} else {
+			v = &status.Description{Source: r.Response.Request.Host}
+		}
+	}
+
+	if v == nil {
+		return meta, nil
+	}
+
+	switch x := v.(type) {
+	case *io.ReadCloser:
+		autoClose = false
+		*x = r.Response.Body
+		return meta, nil
+	case *any:
+		return meta, nil
+	case error:
+		switch u := x.(type) {
+		case status.CanUnmarshalResponse:
+			if r.Response != nil && r.Response.Body != nil {
+				data, err := io.ReadAll(r.Response.Body)
+				if err != nil {
+					return meta, err
+				}
+				if err = u.UnmarshalResponse(r.Response.StatusCode, data); err != nil {
+					return nil, err
+				}
+				return meta, x
+			}
+			if err := u.UnmarshalResponse(r.Response.StatusCode, nil); err != nil {
+				return nil, err
+			}
+			return meta, x
+		default:
+			if err := r.into(u); err != nil {
+				return meta, err
+			}
+			return meta, x
+		}
+	case io.Writer:
+		if _, err := io.Copy(x, r.Response.Body); err != nil {
+			err = fmt.Errorf("WriteResponseFailed: %w", err)
+			return meta, status.Wrap(err, httpx.STATUS__INTERNAL_SERVER_ERROR)
+		}
+	default:
+		if err := r.into(v); err != nil {
+			return meta, err
+		}
+	}
+
+	return meta, nil
+}
+
+func (r *result) into(v any) error {
+	rv := reflect.ValueOf(v)
+
+	media := strings.Split(r.Response.Header.Get("Content-Type"), ";")[0]
+	if x, ok := v.(content.MediaTypeDescriber); ok {
+		media = x.ContentType()
+	}
+
+	f, err := transformer.New(rv.Type(), media, transformer.ForUnmarshalling)
+	if err != nil {
+		return err
+	}
+	if err = f.Into(context.Background(), request.ReadCloserWithHeader(r.Response.Body, r.Response.Header), rv); err != nil {
+		err = fmt.Errorf("ResponseDecodeFailed: unmarshal to %T[%w]", v, err)
+		return status.Wrap(err, httpx.STATUS__INTERNAL_SERVER_ERROR)
+	}
+
+	return nil
 }

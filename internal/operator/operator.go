@@ -30,6 +30,10 @@ type Newer interface {
 }
 
 type Initializer interface {
+	Init(context.Context) error
+}
+
+type InitializerFrom interface {
 	Operator
 	InitFromOperator(Operator)
 }

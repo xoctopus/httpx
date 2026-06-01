@@ -66,7 +66,7 @@ func (f *Factory) New() (op Operator) {
 		op = reflect.New(f.Type).Interface().(Operator)
 	}
 
-	if x, ok := op.(Initializer); ok {
+	if x, ok := op.(InitializerFrom); ok {
 		x.InitFromOperator(f.Operator)
 	}
 

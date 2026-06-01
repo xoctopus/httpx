@@ -2,6 +2,7 @@ package httpx
 
 import (
 	"net/http"
+	"strconv"
 
 	_ "github.com/xoctopus/x/enumx"
 
@@ -120,5 +121,8 @@ func (s Status) Wrap(err error) error {
 
 func IsStatusOK[Code ~int](v Code) bool {
 	i := int(v)
+	if i > 999 {
+		i, _ = strconv.Atoi(strconv.Itoa(i)[0:3])
+	}
 	return i >= http.StatusOK && i < http.StatusMultipleChoices
 }

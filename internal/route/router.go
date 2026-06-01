@@ -1,4 +1,4 @@
-package httpx
+package route
 
 import (
 	"bytes"
@@ -18,17 +18,9 @@ type Router interface {
 	Routes() Routes
 }
 
-func GroupRouter(group string) Router {
-	return NewRouter(operator.GroupOperator(group))
-}
-
-func BasePathRouter(path string) Router {
-	return NewRouter(operator.BasePathOperator(path))
-}
-
-func NewRouter(operators ...Operator) Router {
+func NewRouter(operators ...operator.Operator) Router {
 	return &router{
-		ops: func(yield func(Operator) bool) {
+		ops: func(yield func(operator.Operator) bool) {
 			for i := range operators {
 				op := operators[i]
 
@@ -51,7 +43,7 @@ func NewRouter(operators ...Operator) Router {
 type router struct {
 	prev *router
 	next map[*router]bool
-	ops  iter.Seq[Operator]
+	ops  iter.Seq[operator.Operator]
 }
 
 func (rt router) With(routers ...Router) Router {
@@ -119,7 +111,7 @@ type Route interface {
 }
 
 type route struct {
-	ops  []Operator
+	ops  []operator.Operator
 	last bool
 }
 

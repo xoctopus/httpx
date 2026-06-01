@@ -1,0 +1,85 @@
+package openapi
+
+import (
+	"github.com/xoctopus/httpx/pkg/spec/openapi/jsonschema"
+)
+
+func NewParameter(name string, in ParameterIn) *ParameterObject {
+	return &ParameterObject{
+		Name: name,
+		In:   in,
+	}
+}
+
+// https://spec.openapis.org/oas/latest.html#parameter-object
+type ParameterObject struct {
+	Name string      `json:"name"`
+	In   ParameterIn `json:"in"`
+
+	Parameter
+}
+
+type Parameter struct {
+	Schema      jsonschema.Schema `json:"schema"`
+	Description string            `json:"description,omitzero"`
+	Required    *bool             `json:"required,omitzero"`
+	Deprecated  *bool             `json:"deprecated,omitzero"`
+
+	// https://spec.openapis.org/oas/latest.html#parameter-object
+	Style   ParameterStyle `json:"style,omitzero"`
+	Explode *bool          `json:"explode,omitzero"`
+
+	jsonschema.Ext
+}
+
+type HeaderObject = Parameter
+
+type HeadersObject struct {
+	Headers map[string]*HeaderObject `json:"headers,omitzero"`
+}
+
+func (object *HeadersObject) AddHeader(name string, h *Parameter) {
+	if h == nil {
+		return
+	}
+	if object.Headers == nil {
+		object.Headers = make(map[string]*Parameter)
+	}
+
+	object.Headers[name] = h
+}
+
+func (o *ParameterObject) SetDefaultStyle() {
+	switch o.In {
+	case InPath, InHeader:
+		o.Style = ParameterStyleSimple
+	case InQuery, InCookie:
+		o.Style = ParameterStyleForm
+	}
+
+	switch o.Style {
+	case ParameterStyleForm:
+		o.Explode = new(true)
+	}
+}
+
+type ParameterIn string
+
+const (
+	InQuery  ParameterIn = "query"
+	InPath   ParameterIn = "path"
+	InHeader ParameterIn = "header"
+	InCookie ParameterIn = "cookie"
+)
+
+type ParameterStyle string
+
+const (
+	ParameterStyleMatrix         ParameterStyle = "matrix"         // https://tools.ietf.org/html/rfc6570#section-3.2.7
+	ParameterStyleLabel          ParameterStyle = "label"          // https://tools.ietf.org/html/rfc6570#section-3.2.5
+	ParameterStyleForm           ParameterStyle = "form"           // https://tools.ietf.org/html/rfc6570#section-3.2.8
+	ParameterStyleSimple         ParameterStyle = "simple"         // for array, csv https://tools.ietf.org/html/rfc6570#section-3.2.2
+	ParameterStyleSpaceDelimited ParameterStyle = "spaceDelimited" // for array, ssv
+	ParameterStylePipeDelimited  ParameterStyle = "pipeDelimited"  // for array, pipes
+	ParameterStyleDeepObject     ParameterStyle = "deepObject"     // for object
+)

@@ -1,4 +1,4 @@
-package org
+package user
 
 import (
 	"context"

@@ -38,6 +38,10 @@ type HasCodeText interface {
 	StatusText() string
 }
 
+type CanUnmarshalResponse interface {
+	UnmarshalResponse(code int, data []byte) error
+}
+
 func ErrorsFrom(err error) iter.Seq[error] {
 	return func(yield func(error) bool) {
 		switch x := err.(type) {

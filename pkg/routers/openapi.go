@@ -24,7 +24,6 @@ func (o *OpenAPI) Output(ctx context.Context) (any, error) {
 	}
 
 	// TODO try to extract oas from context
-
 	return nil, errors.New("forbidden")
 }
 

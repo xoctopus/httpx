@@ -8,6 +8,7 @@ import (
 	"net/textproto"
 	"net/url"
 	"reflect"
+	"time"
 
 	"github.com/xoctopus/logx"
 
@@ -50,12 +51,13 @@ func New[T any](v T) Response[T] {
 }
 
 type response[T any] struct {
-	v        any
-	metadata metadata.Metadata
-	cookies  []*http.Cookie
-	location *url.URL
-	media    string
-	status   int
+	v         any
+	metadata  metadata.Metadata
+	cookies   []*http.Cookie
+	location  *url.URL
+	media     string
+	status    int
+	timestamp time.Time
 }
 
 func (r *response[T]) Underlying() T {
@@ -117,6 +119,7 @@ func (r *response[T]) WriteResponse(ctx context.Context, rw http.ResponseWriter,
 		if finalErr != nil {
 			logx.From(ctx).Error(finalErr)
 		}
+		r.timestamp = time.Now()
 	}()
 
 	if w, ok := r.v.(Writer); ok {
@@ -232,15 +235,19 @@ func (r *response[T]) WriteResponse(ctx context.Context, rw http.ResponseWriter,
 	return nil
 }
 
-type ErrorResponse struct {
+func ErrorResponse(e error) error {
+	return &errorResponse{response: response[error]{v: e}}
+}
+
+type errorResponse struct {
 	response[error]
 }
 
-func (e ErrorResponse) Error() string {
+func (e errorResponse) Error() string {
 	return e.Underlying().Error()
 }
 
-func (e ErrorResponse) Unwrap() error {
+func (e errorResponse) Unwrap() error {
 	return e.Underlying()
 }
 

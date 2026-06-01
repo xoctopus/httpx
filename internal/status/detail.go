@@ -141,3 +141,9 @@ func (d *Description) StatusText() string {
 func (d *Description) Error() string {
 	return fmt.Sprintf("%s{message=%q}", d.Text, d.Message)
 }
+
+func (d *Description) UnmarshalResponse(code int, data []byte) error {
+	x := UnmarshalResponse(code, data)
+	*d = *x
+	return nil
+}

@@ -8,13 +8,8 @@ import (
 	"github.com/xoctopus/httpx/internal/method"
 	"github.com/xoctopus/httpx/internal/operator"
 	"github.com/xoctopus/httpx/internal/payload/path"
-	"github.com/xoctopus/httpx/internal/request"
+	"github.com/xoctopus/httpx/internal/payload/transformer"
 )
-
-type Incoming interface {
-	UnmarshalOperator(ctx context.Context, r request.Request, op any) error
-	WriteResponse(ctx context.Context, rw http.ResponseWriter, result any, r request.Request)
-}
 
 type Outgoing interface {
 	NewRequest(ctx context.Context, v any) (*http.Request, error)
@@ -48,7 +43,7 @@ func NewOutgoingTransport(ctx context.Context, r any) (Outgoing, error) {
 
 	if o.path == "" {
 		if o.typ.Kind() == reflect.Struct {
-			o.path = path.ResolveFromTag(o.typ)
+			o.path, _ = path.ResolveFromTag(o.typ)
 		}
 	}
 
@@ -70,6 +65,5 @@ func (o outgoing) Path() string {
 }
 
 func (o outgoing) NewRequest(ctx context.Context, v any) (*http.Request, error) {
-	// TODO
-	return nil, nil
+	return transformer.NewRequest(ctx, o.Method(), o.Path(), v)
 }

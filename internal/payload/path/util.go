@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/xoctopus/x/contextx"
+
+	"github.com/xoctopus/httpx/internal/types"
 )
 
 func SplitPath(p string) []string {
@@ -59,15 +61,18 @@ func Normalize(p string) string {
 	return "/" + strings.Join(processed, "/")
 }
 
-var gMethodPath = ""
-
-func ResolveFromTag(t reflect.Type) string {
+func ResolveFromTag(t reflect.Type) (string, string) {
 	for f := range t.Fields() {
 		if f.Anonymous {
-			if f.Type.PkgPath() == gMethodPath && strings.HasPrefix(f.Name, "Method") {
-				if p, ok := f.Tag.Lookup("path"); ok {
-					return Normalize(p)
+			if f.Type.PkgPath() == types.ExposedRoot && strings.HasPrefix(f.Name, "Method") {
+				p, summary := "", ""
+				if x, ok := f.Tag.Lookup("path"); ok {
+					p = Normalize(x)
 				}
+				if x, ok := f.Tag.Lookup("summary"); ok {
+					summary = x
+				}
+				return p, summary
 			}
 			// deep walk
 			if f.Type.Kind() == reflect.Struct {
@@ -75,7 +80,7 @@ func ResolveFromTag(t reflect.Type) string {
 			}
 		}
 	}
-	return ""
+	return "", ""
 }
 
 type (
