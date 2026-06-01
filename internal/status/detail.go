@@ -4,6 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
+
+	"github.com/xoctopus/httpx/internal/jsonv2/json"
 )
 
 func AsDescription(err error, src, loc string) *Description {
@@ -59,14 +62,63 @@ func AsDescription(err error, src, loc string) *Description {
 	return de
 }
 
+func UnmarshalResponse(code int, rspraw []byte) *Description {
+	d := &Description{
+		Status: AsStatus(code),
+	}
+
+	defer func() {
+		if len(d.Text) == 0 {
+			d.Text = d.StatusText()
+		}
+		if len(d.Message) == 0 {
+			d.Message = d.StatusText()
+		}
+	}()
+
+	rsp := &Response{}
+	if err := json.Unmarshal(rspraw, rsp); err != nil {
+		d.Message = string(rspraw)
+		d.Status = AsStatus(http.StatusInternalServerError)
+		return d
+	}
+
+	messages := make([]string, 0, 4)
+	switch len(rsp.Errors) {
+	case 0:
+		if len(rsp.Message) > 0 {
+			messages = append(messages, rsp.Message)
+		}
+	case 1:
+		d = rsp.Errors[0]
+		if d.Status == nil {
+			d.Status = AsStatus(code)
+		}
+	}
+
+	// must be ordered: rsp.Message .. extra.title .. extra.detail
+	if rsp.Extra != nil {
+		if x, ok := rsp.Extra["title"].(string); ok && len(x) > 0 {
+			messages = append(messages, x)
+		}
+		if x, ok := rsp.Extra["detail"].(string); ok && len(x) > 0 {
+			messages = append(messages, x)
+		}
+	}
+	if len(messages) > 0 {
+		d.Message = strings.Join(messages, "\n")
+	}
+	return d
+}
+
 type Description struct {
-	// xxCode error code
+	// Text error code text
 	Text string `json:"code,omitzero"`
 	// Message error message
 	Message string `json:"message,omitzero"`
 	// Detail error detail
 	Detail string `json:"detail,omitzero"`
-	// Location error location. enumerations in {query, header, path, body, cookie}
+	// Location error location, see payload.Locations
 	Location string `json:"location,omitzero"`
 	// Position pointer to field positon. eg: Type.Field
 	Position string `json:"position,omitzero"`

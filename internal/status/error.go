@@ -19,15 +19,15 @@ type _status struct {
 	text string
 }
 
-func (s _status) IsValid() bool {
-	return s.code > 0
+func (s *_status) IsValid() bool {
+	return s != nil && s.code > 0
 }
 
-func (s _status) StatusCode() int {
+func (s *_status) StatusCode() int {
 	return s.code
 }
 
-func (s _status) StatusText() string {
+func (s *_status) StatusText() string {
 	return s.text
 }
 

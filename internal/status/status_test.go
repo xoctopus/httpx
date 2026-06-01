@@ -2,55 +2,39 @@ package status_test
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
+	"slices"
+	"testing"
+
+	. "github.com/xoctopus/x/testx"
 
 	"github.com/xoctopus/httpx/internal/status"
 	"github.com/xoctopus/httpx/internal/validation"
 )
 
-func ExampleAsDescription() {
-	// wrapped error
-	e := status.WrapCode(errors.New("e1"), http.StatusForbidden)
-	de := status.AsDescription(e, "server-name", "query")
-	fmt.Println(de)
+func TestErrorsFrom(t *testing.T) {
+	errs := slices.Collect(status.ErrorsFrom(nil))
+	Expect(t, errs, HaveLen[[]error](0))
 
-	// user error
-	e = errors.New("e2")
-	de = status.AsDescription(e, "server-name", "query")
-	fmt.Println(de)
+	err0 := errors.New("0")
 
-	// validation error
-	e = validation.WrapPositionError(validation.WrapLocationError(errors.New("e3"), "query"), "field")
-	de = status.AsDescription(e, "server-name", "query")
-	fmt.Println(de)
-	fmt.Println("  in:  ", de.Location)
-	fmt.Println("  pos: ", de.Position)
-	fmt.Println("  code:", de.StatusCode())
-	fmt.Println("  text:", de.StatusText())
+	err1 := validation.WrapPositionError(err0, "0")
+	errs = slices.Collect(status.ErrorsFrom(err1))
+	Expect(t, errs, HaveLen[[]error](1))
+	Expect(t, errs[0], Equal(err1))
 
-	de2 := status.AsDescription(de, "", "")
-	fmt.Println(de2)
-	fmt.Println("  in:  ", de2.Location)
-	fmt.Println("  pos: ", de2.Position)
-	fmt.Println("  code:", de2.StatusCode())
-	fmt.Println("  text:", de2.StatusText())
+	err2 := status.Wrap(err0, status.AsStatus(http.StatusBadRequest))
+	errs = slices.Collect(status.ErrorsFrom(err2))
+	Expect(t, errs, HaveLen[[]error](1))
+	Expect(t, errs[0], Equal(err2))
 
-	// Output:
-	// FORBIDDEN{message="e1"}
-	// INTERNAL_SERVER_ERROR{message="e2"}
-	// BAD_REQUEST{message="e3"}
-	//   in:   query
-	//   pos:  field
-	//   code: 400
-	//   text: BAD_REQUEST
-	// BAD_REQUEST{message="e3"}
-	//   in:   query
-	//   pos:  field
-	//   code: 400
-	//   text: BAD_REQUEST
-}
+	err3 := validation.WrapLocationError(err0, "3")
+	errs = slices.Collect(status.ErrorsFrom(err3))
+	Expect(t, errs, HaveLen[[]error](2))
+	Expect(t, errs[0], Equal(err3))
+	Expect(t, errs[1], Equal(err0))
 
-func ExampleAsErrorResponse() {
-	// e1 := status.WrapStatus(errors.New("e1"), httpx.STATUS__INTERNAL_SERVER_ERROR)
+	err4 := errors.Join(err0, err1, nil, err2, err3)
+	errs = slices.Collect(status.ErrorsFrom(err4))
+	Expect(t, errs, HaveLen[[]error](5))
 }

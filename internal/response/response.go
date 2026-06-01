@@ -127,7 +127,7 @@ func (r *response[T]) WriteResponse(ctx context.Context, rw http.ResponseWriter,
 
 	if err, ok := r.v.(error); ok {
 		meta, _ := types.OperationMetaFrom(ctx)
-		rsp = status.AsErrorResponse(err, meta.ServerMeta.UA())
+		rsp = status.AsResponse(err, meta.ServerMeta.UA())
 	}
 
 	if x, ok := rsp.(status.Describer); ok {

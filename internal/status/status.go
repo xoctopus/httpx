@@ -39,37 +39,24 @@ type HasCodeText interface {
 }
 
 func ErrorsFrom(err error) iter.Seq[error] {
-	hasLocationOrPosition := func(x error) bool {
-		_, hasPosition := x.(HasPosition)
-		_, hasLocation := x.(HasLocation)
-		return hasPosition || hasLocation
-	}
-
 	return func(yield func(error) bool) {
-		if err == nil {
-			return
-		}
-
 		switch x := err.(type) {
-		case Describer:
-			yield(err)
+		case nil:
+			return
 		case HasPosition:
 			yield(err)
+		case Describer:
+			yield(err)
 		case interface{ Unwrap() error }:
-			if hasLocationOrPosition(err) {
+			if _, ok := err.(HasLocation); ok {
 				yield(err)
 			}
-			ue := x.Unwrap()
-			if ue == nil {
-				return
-			}
-			for e := range ErrorsFrom(ue) {
-				yield(e)
+			if ue := x.Unwrap(); ue != nil {
+				for e := range ErrorsFrom(ue) {
+					yield(e)
+				}
 			}
 		case interface{ Unwrap() []error }:
-			if hasLocationOrPosition(err) {
-				yield(err)
-			}
 			for _, ue := range x.Unwrap() {
 				if ue != nil {
 					for e := range ErrorsFrom(ue) {

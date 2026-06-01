@@ -45,9 +45,6 @@ func (e *PositionError) Error() string {
 }
 
 func (e *PositionError) Unwrap() error {
-	if x, ok := errors.AsType[*LocationError](e.err); ok {
-		return x.Unwrap()
-	}
 	return e.err
 }
 
@@ -78,9 +75,6 @@ func (e *LocationError) Error() string {
 }
 
 func (e *LocationError) Unwrap() error {
-	if x, ok := errors.AsType[*PositionError](e.err); ok {
-		return x.Unwrap()
-	}
 	return e.err
 }
 

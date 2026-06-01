@@ -36,8 +36,8 @@ func ExampleWrapLocationError() {
 	// Output:
 	// wp: [pos:pos]
 	// wl: [loc:loc]
-	// wp: [loc:loc pos:pos]
-	// wl: [loc:loc pos:pos]
+	// wp: [pos:pos]: [loc:loc pos:pos]
+	// wl: [loc:loc]: [loc:loc pos:pos]
 	// <nil>
 	// <nil>
 }
