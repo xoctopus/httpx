@@ -21,7 +21,7 @@ type Request interface {
 	Method() string
 
 	Path() string
-	Param(string) string
+	PathParam(string) string
 
 	Header() http.Header
 	HeaderValue(string) string
@@ -42,17 +42,32 @@ type Request interface {
 }
 
 func From(r *http.Request) Request {
-	return &request{
-		request:   r,
-		timestamp: time.Now(),
+	ri := &request{request: r}
+	ri.headers = r.Header
+	ri.queries = r.URL.Query()
+	if len(ri.queries) == 0 {
+		if strings.HasPrefix(r.Header.Get("Content-Type"), "application/x-www-form-urlencoded") {
+			data, err := io.ReadAll(r.Body)
+			if err == nil {
+				_ = r.Body.Close()
+				if q, e := url.ParseQuery(string(data)); e == nil {
+					ri.queries = q
+				}
+				// put back to body for custom parse
+				r.Body = io.NopCloser(bytes.NewBuffer(data))
+			}
+		}
 	}
+	ri.timestamp = time.Now()
+
+	return ri
 }
 
 type request struct {
 	request   *http.Request
 	timestamp time.Time
 	queries   url.Values
-	cookies   []*http.Cookie
+	headers   http.Header
 	params    path.ValueGetter
 }
 
@@ -72,7 +87,7 @@ func (r *request) Path() string {
 	return r.request.URL.Path
 }
 
-func (r *request) Param(name string) string {
+func (r *request) PathParam(name string) string {
 	if r.params == nil {
 		r.params = path.ParamGetterFrom(r.Context())
 	}
@@ -108,7 +123,7 @@ func (r *request) HeaderValues(name string) []string {
 }
 
 func (r *request) Query() string {
-	return r.request.URL.RawQuery
+	return r.queries.Encode()
 }
 
 func (r *request) QueryValue(name string) string {
@@ -119,30 +134,11 @@ func (r *request) QueryValue(name string) string {
 }
 
 func (r *request) QueryValues(name string) []string {
-	if r.queries == nil {
-		r.queries = r.request.URL.Query()
-	}
-	if len(r.queries) == 0 {
-		if strings.HasPrefix(
-			r.HeaderValue("Content-Type"),
-			"application/x-www-form-urlencoded",
-		) {
-			data, err := io.ReadAll(r.request.Body)
-			if err == nil {
-				_ = r.request.Body.Close()
-				if q, e := url.ParseQuery(string(data)); e == nil {
-					r.queries = q
-				}
-				// put back to body for custom parse
-				r.request.Body = io.NopCloser(bytes.NewBuffer(data))
-			}
-		}
-	}
 	return r.queries[name]
 }
 
 func (r *request) Cookies() []*http.Cookie {
-	return r.cookies
+	return r.request.Cookies()
 }
 
 func (r *request) CookieValue(name string) string {
@@ -154,13 +150,14 @@ func (r *request) CookieValue(name string) string {
 
 func (r *request) CookieValues(name string) []string {
 	values := make([]string, 0)
-	for _, c := range r.cookies {
+	for _, c := range r.request.Cookies() {
 		if c.Name == name {
-			if c.Expires.IsZero() {
-				values = append(values, c.Value)
-			} else if c.Expires.After(r.timestamp) {
-				values = append(values, c.Value)
-			}
+			// if c.Expires.IsZero() {
+			// 	values = append(values, c.Value)
+			// } else if c.Expires.After(r.timestamp) {
+			// 	values = append(values, c.Value)
+			// }
+			values = append(values, c.Value)
 		}
 	}
 	return values
@@ -177,9 +174,9 @@ func (r *request) ValueIn(loc, key string) string {
 func (r *request) ValuesIn(loc, key string) []string {
 	switch loc {
 	case payload.HEADER:
-		return r.QueryValues(key)
+		return r.HeaderValues(key)
 	case payload.PATH:
-		p := r.Param(key)
+		p := r.PathParam(key)
 		if len(p) == 0 {
 			return nil
 		}
@@ -200,14 +197,14 @@ func (r *request) ValuesIn(loc, key string) []string {
 func (r *request) Body() io.ReadCloser {
 	rc := r.request.Body
 	if r.request.ContentLength == 0 {
-		if v := r.request.Header.Get("Content-Type"); len(v) == 0 {
+		if v := r.headers.Get("Content-Type"); len(v) == 0 {
 			if q := r.request.URL.RawQuery; len(q) > 0 {
 				r.request.Header.Set("Content-Type", `application/x-www-form-urlencoded; param="value"`)
 				rc = io.NopCloser(bytes.NewBufferString(q))
 			}
 		}
 	}
-	return ReadCloserWithHeader(rc, r.request.Header)
+	return ReadCloserWithHeader(rc, r.headers)
 }
 
 func ReadCloserWithHeader(rc io.ReadCloser, header http.Header) io.ReadCloser {
