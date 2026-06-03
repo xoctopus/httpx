@@ -5,6 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/xoctopus/x/codex"
+	"github.com/xoctopus/x/misc/must"
 
 	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
 	"github.com/xoctopus/httpx/internal/validation"
@@ -67,7 +68,25 @@ type String struct {
 	*va.RegexpVa
 	*va.EnumVa[string]
 
-	mode string
+	mode   string
+	format string
+}
+
+func (v *String) Mode() string {
+	return v.mode
+}
+
+func (v *String) SetMode(m string) {
+	must.BeTrue(m == BYTE_MODE || m == RUNE_MODE)
+	v.mode = m
+}
+
+func (v *String) Format() string {
+	return v.format
+}
+
+func (v *String) SetFormat(f string) {
+	v.format = f
 }
 
 func (v *String) Validate(value []byte) error {

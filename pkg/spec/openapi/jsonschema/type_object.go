@@ -29,7 +29,7 @@ func ObjectOf(props map[string]Schema, required ...string) *ObjectType {
 	}
 }
 
-func RecordOf(k Schema, v Schema) *ObjectType {
+func RecordOf(k, v Schema) *ObjectType {
 	return &ObjectType{
 		Type:                 "object",
 		PropertyNames:        k,

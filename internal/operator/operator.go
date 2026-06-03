@@ -55,9 +55,11 @@ type HasMiddlewares interface {
 	Middlewares() []Operator
 }
 
-type EmptyOperator struct {
-	NoOutput
-}
+type EmptyOperator struct{}
+
+func (EmptyOperator) NoOutput() {}
+
+func (EmptyOperator) Output(context.Context) (any, error) { return nil, nil }
 
 func BasePathOperator(base string) Operator {
 	return &MetaOperator{base: path.Clean(base)}

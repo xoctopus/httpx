@@ -60,7 +60,7 @@ func UnmarshalRequest(req request.Request, x any) error {
 	if rv.Kind() != reflect.Pointer {
 		return fmt.Errorf("unmarshal target MUST be a pointer value")
 	}
-	return NewArshaler(rv).UnmarshalRequest(req)
+	return NewArshaler(rv.Elem()).UnmarshalRequest(req)
 }
 
 func NewArshaler(v reflect.Value) Arshaler {
@@ -359,6 +359,7 @@ func (p *parameter) UnmarshalRequest(r request.Request) error {
 					err = t.Into(r.Context(), body, rv.Addr())
 				})
 			} else {
+				// FIXME here should fix embedded fields
 				err = p.UnmarshalValues(r.Context(), f, r.ValuesIn(loc, f.Name))
 			}
 

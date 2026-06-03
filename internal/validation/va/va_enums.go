@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"github.com/xoctopus/x/codex"
+	"github.com/xoctopus/x/slicex"
 
 	"github.com/xoctopus/httpx/internal/validation/rule"
 )
@@ -49,6 +50,13 @@ func NewEnumVa[T Enum](r rule.Rule) (*EnumVa[T], error) {
 type EnumVa[T comparable] struct {
 	vs []T
 	mm map[T]struct{}
+}
+
+func (es *EnumVa[T]) Enums() []any {
+	if es == nil {
+		return nil
+	}
+	return slicex.M(es.vs, func(from T) any { return from })
 }
 
 func (es *EnumVa[T]) Validate(v T) error {

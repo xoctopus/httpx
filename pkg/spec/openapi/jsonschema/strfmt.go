@@ -24,6 +24,14 @@ func (u URI) MarshalText() ([]byte, error) {
 	return []byte(x.String()), nil
 }
 
+func ParseURIRef(u string) (*URIRef, error) {
+	x, err := url.Parse(u)
+	if err != nil {
+		return nil, err
+	}
+	return (*URIRef)(x), nil
+}
+
 // URIRef uri-reference
 type URIRef url.URL
 

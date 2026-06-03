@@ -60,3 +60,22 @@ func ParseEnumValue[T Enum](data string) (T, error) {
 	}
 	return x.(T), err
 }
+
+type NumericRangeValidation[T Numeric] interface {
+	Min() *T
+	ExclusiveMin() bool
+	Max() *T
+	ExclusiveMax() bool
+}
+
+type NumericMultipleValidation[T Numeric] interface {
+	MultipleOf() T
+}
+
+type EnumValidation interface {
+	Enums() []any
+}
+
+type LengthValidation interface {
+	LengthRange() (*uint64, *uint64)
+}

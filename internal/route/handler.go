@@ -42,7 +42,7 @@ type Handler interface {
 	Operators() []*operator.Factory
 }
 
-func NewRouteHandlers(route Route, service string, middlewares ...Middleware) ([]Handler, error) {
+func NewHandlers(route Route, service string, middlewares ...Middleware) ([]Handler, error) {
 	h := &handler{
 		service:    service,
 		middleware: ApplyMiddlewares(middlewares...),
@@ -135,7 +135,7 @@ func (h *handler) Method() string {
 }
 
 func (h *handler) Path() string {
-	return h.segments.ParamString()
+	return h.segments.PathString()
 }
 
 func (h *handler) PathSegments() path.Segments {

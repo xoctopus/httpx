@@ -51,6 +51,34 @@ type RangeVa[T Numeric] struct {
 	exMax bool
 }
 
+func (vr *RangeVa[T]) Min() *T {
+	if vr == nil {
+		return nil
+	}
+	return vr.min
+}
+
+func (vr *RangeVa[T]) ExclusiveMin() bool {
+	if vr == nil {
+		return false
+	}
+	return vr.exMin
+}
+
+func (vr *RangeVa[T]) Max() *T {
+	if vr == nil {
+		return nil
+	}
+	return vr.max
+}
+
+func (vr *RangeVa[T]) ExclusiveMax() bool {
+	if vr == nil {
+		return false
+	}
+	return vr.exMax
+}
+
 func (vr *RangeVa[T]) BuiltTo(b rule.Builder) {
 	if vr != nil {
 		_min, _max := "", ""

@@ -2,11 +2,12 @@ package path
 
 import (
 	"fmt"
+	"iter"
 	"strings"
 )
 
 type Segment interface {
-	ParamString() string
+	PathString() string
 }
 
 func NewSegment(part string) Segment {
@@ -29,7 +30,7 @@ func NewSegment(part string) Segment {
 
 type segment string
 
-func (s segment) ParamString() string {
+func (s segment) PathString() string {
 	return string(s)
 }
 
@@ -52,7 +53,7 @@ func (np namedSegment) ParamName() string {
 	return np.name
 }
 
-func (np namedSegment) ParamString() string {
+func (np namedSegment) PathString() string {
 	s := "{%s}"
 	if np.multiple {
 		s = "{%s...}"
@@ -76,12 +77,41 @@ func ParseSegments(p string) Segments {
 
 type Segments []Segment
 
+func (ss Segments) Chunk() iter.Seq[Segments] {
+	return func(yield func(Segments) bool) {
+		lastOmit := 0
+
+		for i, s := range ss {
+			if named, ok := s.(NamedSegment); ok {
+				if named.Multiple() {
+					if !yield(ss[lastOmit : i+1]) {
+						return
+					}
+					lastOmit = i + 1
+				}
+			}
+		}
+
+		if lastOmit > 0 {
+			if lastOmit < len(ss) {
+				if !yield(ss[lastOmit:]) {
+					return
+				}
+			}
+		} else {
+			if !yield(ss[:]) {
+				return
+			}
+		}
+	}
+}
+
 func (ss Segments) PathValues(resource string) (Values, error) {
 	params := Values{}
 
 	_, ok := ss.MatchTo(params, resource)
 	if !ok {
-		return nil, fmt.Errorf("pathname %s is not match %s", resource, ss.ParamString())
+		return nil, fmt.Errorf("pathname %s is not match %s", resource, ss.PathString())
 	}
 
 	return params, nil
@@ -91,7 +121,7 @@ func (ss Segments) MatchTo(vm ValuesModifier, res string) (string, bool) {
 	return NewMatcher(ss, "").MatchTo(vm, res)
 }
 
-func (ss Segments) ParamString() string {
+func (ss Segments) PathString() string {
 	b := &strings.Builder{}
 
 	b.WriteString("/")
@@ -99,7 +129,7 @@ func (ss Segments) ParamString() string {
 		if i > 0 {
 			b.WriteString("/")
 		}
-		b.WriteString(s.ParamString())
+		b.WriteString(s.PathString())
 	}
 	return b.String()
 }
@@ -119,5 +149,5 @@ func (ss Segments) Encode(vs Values) string {
 		x[idx] = s
 	}
 
-	return x.ParamString()
+	return x.PathString()
 }

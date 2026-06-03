@@ -75,7 +75,7 @@ func (pm *matcher) MatchTo(vm ValuesModifier, uri string) (string, bool) {
 			continue
 		}
 
-		if s.ParamString() != part {
+		if s.PathString() != part {
 			if strict {
 				return "", false
 			}

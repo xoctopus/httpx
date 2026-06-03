@@ -16,7 +16,6 @@ type Server struct {
 	// TODO other configurations
 	Addr string `url:""`
 
-	srv     *http.Server
 	handler http.Handler
 }
 
@@ -52,4 +51,8 @@ func (s Server) Init(ctx context.Context) error {
 	log.Info("shutdowning in %s", timeout)
 
 	return srv.Shutdown(ctx)
+}
+
+func ListenAndServe(ctx context.Context, addr string, h http.Handler) error {
+	return (&Server{Addr: addr, handler: h}).Init(ctx)
 }

@@ -13,17 +13,17 @@ func TestSegment(t *testing.T) {
 	Expect(t, s, BeNil[path.Segment]())
 
 	s = path.NewSegment("abc")
-	Expect(t, s.ParamString(), Equal("abc"))
+	Expect(t, s.PathString(), Equal("abc"))
 
 	s = path.NewSegment("{userID}")
-	Expect(t, s.ParamString(), Equal("{userID}"))
+	Expect(t, s.PathString(), Equal("{userID}"))
 	ns, ok := s.(path.NamedSegment)
 	Expect(t, ok, BeTrue())
 	Expect(t, ns.ParamName(), Equal("userID"))
 	Expect(t, ns.Multiple(), BeFalse())
 
 	s = path.NewSegment("{users...}")
-	Expect(t, s.ParamString(), Equal("{users...}"))
+	Expect(t, s.PathString(), Equal("{users...}"))
 	ns, ok = s.(path.NamedSegment)
 	Expect(t, ok, BeTrue())
 	Expect(t, ns.ParamName(), Equal("users"))
@@ -31,7 +31,7 @@ func TestSegment(t *testing.T) {
 
 	ss := path.ParseSegments("/v1/user/{userID}")
 	Expect(t, len(ss), Equal(3))
-	Expect(t, ss.ParamString(), Equal("/v1/user/{userID}"))
+	Expect(t, ss.PathString(), Equal("/v1/user/{userID}"))
 
 	values, err := ss.PathValues("/v1/user/100")
 	Expect(t, err, Succeed())
@@ -50,7 +50,7 @@ func TestSegment(t *testing.T) {
 
 	ss = path.ParseSegments("/v1/{users...}/commit/{ref}")
 	Expect(t, len(ss), Equal(4))
-	Expect(t, ss.ParamString(), Equal("/v1/{users...}/commit/{ref}"))
+	Expect(t, ss.PathString(), Equal("/v1/{users...}/commit/{ref}"))
 
 	values, err = ss.PathValues("/v1/100/101/102/commit/v1")
 	Expect(t, err, Succeed())

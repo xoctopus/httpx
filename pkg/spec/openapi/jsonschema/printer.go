@@ -50,7 +50,7 @@ func newPrinter(w io.Writer) Printer {
 }
 
 type printer struct {
-	indent  int
+	indents int
 	newline bool
 	io.Writer
 }
@@ -65,9 +65,9 @@ func (p *printer) PrintDoc(desc string) {
 	}
 }
 
-func (p *printer) printIndent() {
+func (p *printer) indent() {
 	if p.newline {
-		for i := 0; i < p.indent; i++ {
+		for i := 0; i < p.indents; i++ {
 			_, _ = fmt.Fprintf(p, "  ")
 		}
 		p.newline = false
@@ -79,12 +79,12 @@ func (p *printer) PrintFrom(pt PrinterTo, options ...SchemaPrintOption) {
 }
 
 func (p *printer) Print(values ...any) {
-	p.printIndent()
+	p.indent()
 	_, _ = fmt.Fprint(p.Writer, values...)
 }
 
 func (p *printer) Printf(format string, values ...any) {
-	p.printIndent()
+	p.indent()
 	_, _ = fmt.Fprintf(p.Writer, format, values...)
 }
 
@@ -94,8 +94,8 @@ func (p *printer) Return() {
 }
 
 func (p *printer) Indent() func() {
-	p.indent++
+	p.indents++
 	return func() {
-		p.indent--
+		p.indents--
 	}
 }

@@ -52,10 +52,14 @@ func AsResponse(err error, source string) *Response {
 }
 
 type Response struct {
-	Code    int            `json:"code,omitzero"`
-	Message string         `json:"message,omitzero"`
-	Errors  []*Description `json:"errors,omitzero"`
-	Extra   map[string]any `json:",inline"`
+	// 错误码
+	Code int `json:"code,omitzero"`
+	// 错误信息
+	Message string `json:"message,omitzero"`
+	// 错误详情
+	Errors []*Description `json:"errors,omitzero"`
+
+	Extra map[string]any `json:",inline"`
 }
 
 // StatusCode returns http.StatusCode

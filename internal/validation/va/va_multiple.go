@@ -42,6 +42,13 @@ type MultipleVa[T Numeric] struct {
 	div T
 }
 
+func (m *MultipleVa[T]) MultipleOf() T {
+	if m == nil {
+		return 0
+	}
+	return m.div
+}
+
 func (m *MultipleVa[T]) BuiltTo(b rule.Builder) {
 	if m != nil && m.div != T(0) {
 		b.AppendValues([]*rule.Literal{rule.NewLiteral("%" + fmt.Sprint(m.div))})

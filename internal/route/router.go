@@ -59,7 +59,7 @@ func (rt *router) Register(r Router) {
 		rt.next = map[*router]bool{}
 	}
 	must.BeTrueF(
-		r.(*router).prev != nil,
+		r.(*router).prev == nil,
 		"router is already registered. prev: %v, self: %v", rt.prev, r,
 	)
 	r.(*router).prev = rt

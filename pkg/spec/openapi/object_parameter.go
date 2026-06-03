@@ -11,7 +11,7 @@ func NewParameter(name string, in ParameterIn) *ParameterObject {
 	}
 }
 
-// https://spec.openapis.org/oas/latest.html#parameter-object
+// ParameterObject https://spec.openapis.org/oas/latest.html#parameter-object
 type ParameterObject struct {
 	Name string      `json:"name"`
 	In   ParameterIn `json:"in"`

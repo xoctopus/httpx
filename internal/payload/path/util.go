@@ -91,7 +91,10 @@ type (
 	}
 )
 
-var WithParamGetter = contextx.With[tCtxValueGetter, ValueGetter]
+var (
+	WithParamGetter  = contextx.With[tCtxValueGetter, ValueGetter]
+	CarryParamGetter = contextx.Carry[tCtxValueGetter, ValueGetter]
+)
 
 func ParamGetterFrom(ctx context.Context) ValueGetter {
 	if x, ok := contextx.From[tCtxValueGetter, ValueGetter](ctx); ok && x != nil {

@@ -2,6 +2,7 @@ package types_test
 
 import (
 	"fmt"
+	"testing"
 
 	. "github.com/xoctopus/httpx/internal/types"
 )
@@ -27,12 +28,14 @@ func ExampleServerMeta() {
 	om.ID = "OperatorX"
 	fmt.Println(om.UA())
 
-	fmt.Println(PkgRoot)
-
 	// Output:
 	// server-name
 	// server-name@v0.0.1
 	// server-name@v0.0.1(unknown)
 	// server-name@v0.0.1(OperatorX)
-	// github.com/xoctopus/httpx
+}
+
+func TestExposed(t *testing.T) {
+	t.Log(PkgRoot)
+	t.Log(ExposedRoot)
 }

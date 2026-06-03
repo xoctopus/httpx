@@ -26,6 +26,14 @@ type RegexpVa struct {
 	hint    string
 }
 
+func (v *RegexpVa) Pattern() string {
+	return v.pattern
+}
+
+func (v *RegexpVa) Hint() string {
+	return v.hint
+}
+
 func (v *RegexpVa) Validate(s string) error {
 	if v != nil && !v.regexp.MatchString(s) {
 		hint := ""

@@ -11,9 +11,9 @@ type (
 	ResponseApplier = response.Applier
 )
 
-func WithStatusCode(statusCode int) ResponseApplier {
+func WithStatusCode[Code ~int](code Code) ResponseApplier {
 	return func(m response.Modifier) {
-		m.SetStatusCode(statusCode)
+		m.SetStatusCode(int(code))
 	}
 }
 

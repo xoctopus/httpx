@@ -56,6 +56,17 @@ type LengthVa struct {
 	length *uint
 }
 
+func (lr *LengthVa) LengthRange() (*uint64, *uint64) {
+	if lr == nil {
+		return nil, nil
+	}
+	_max := (*uint64)(nil)
+	if lr.max != nil {
+		_max = new(uint64(*lr.max))
+	}
+	return new(uint64(lr.min)), _max
+}
+
 func (lr *LengthVa) String() string {
 	if lr == nil {
 		return ""

@@ -60,6 +60,8 @@ type response[T any] struct {
 	timestamp time.Time
 }
 
+var _ Modifier = (*response[any])(nil)
+
 func (r *response[T]) Underlying() T {
 	return r.v.(T)
 }
@@ -68,12 +70,28 @@ func (r *response[T]) Cookies() []*http.Cookie {
 	return r.cookies
 }
 
+func (r *response[T]) StatusCode() int {
+	return r.status
+}
+
 func (r *response[T]) SetStatusCode(code int) {
 	r.status = code
 }
 
+func (r *response[T]) ContentType() string {
+	return r.media
+}
+
 func (r *response[T]) SetContentType(media string) {
 	r.media = media
+}
+
+func (r *response[T]) ContentLength() int64 {
+	panic("response.ContentLength")
+}
+
+func (r *response[T]) SetContentLength(n int64) {
+	panic("response.SetContentLength")
 }
 
 func (r *response[T]) SetMetadata(key string, values ...string) {
@@ -95,14 +113,6 @@ func (r *response[T]) SetCookies(cookies []*http.Cookie) {
 
 func (r *response[T]) SetLocation(location *url.URL) {
 	r.location = location
-}
-
-func (r *response[T]) StatusCode() int {
-	return r.status
-}
-
-func (r *response[T]) ContentType() string {
-	return r.media
 }
 
 func (r *response[T]) Meta() metadata.Metadata {

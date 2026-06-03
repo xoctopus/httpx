@@ -24,13 +24,6 @@ type CanSwaggerDoc interface {
 	SwaggerDoc() map[string]string
 }
 
-func IsType[T Schema](s any) bool {
-	if _, ok := s.(T); ok {
-		return true
-	}
-	return false
-}
-
 type Payload struct {
 	Schema
 }

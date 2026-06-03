@@ -16,10 +16,14 @@ type Schema interface {
 	PrintTo(w io.Writer, options ...SchemaPrintOption)
 }
 
+type ValidationSchema interface {
+	PatchValidation(any) error
+}
+
 var (
 	unmarshalers = json.UnmarshalFromFunc[*Schema](
-		func(decoder *jsontext.Decoder, schema *Schema) error {
-			return (&schemaDecoder{schema: schema}).UnmarshalJSONFrom(decoder)
+		func(d *jsontext.Decoder, schema *Schema) error {
+			return (&decoder{schema: schema}).UnmarshalJSONFrom(d)
 		},
 	)
 )
@@ -29,47 +33,45 @@ var (
 	ErrInvalidJSONSchemaType   = errors.New("invalid json schema type")
 )
 
-type schemaDecoder struct {
+type decoder struct {
 	schema  *Schema
 	options json.Options
-	anchors map[string]string
+	// anchors map[string]string
 }
 
-var _ json.UnmarshalerFrom = &schemaDecoder{}
+var _ json.UnmarshalerFrom = &decoder{}
 
-func (u *schemaDecoder) UnmarshalJSONFrom(decoder *jsontext.Decoder) error {
-	u.options = decoder.Options()
+func (u *decoder) UnmarshalJSONFrom(d *jsontext.Decoder) error {
+	u.options = d.Options()
 
-	startToken, err := decoder.ReadToken()
+	startToken, err := d.ReadToken()
 	if err != nil {
 		return err
 	}
 
 	switch startToken.Kind() {
-	case 't':
-		// true
+	case jsontext.TRUE:
 		*u.schema = &AnyType{}
 		return nil
-	case '{':
-		// object
-		return u.unmarshalFromObject(decoder)
+	case jsontext.OBJECT:
+		return u.unmarshal(d)
 	}
 
 	return ErrInvalidJSONSchemaObject
 }
 
-func (u *schemaDecoder) decode(decoder *jsontext.Decoder, target any) error {
-	k, err := decoder.ReadValue()
+func (u *decoder) decode(d *jsontext.Decoder, target any) error {
+	k, err := d.ReadValue()
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(k, target, u.options); err != nil {
+	if err = json.Unmarshal(k, target, u.options); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (u *schemaDecoder) schemaOfType(typ string, format string) (Schema, error) {
+func (u *decoder) new(typ string, format string) (Schema, error) {
 	switch typ {
 	case "array":
 		return &ArrayType{Type: typ}, nil
@@ -103,20 +105,22 @@ func (u *schemaDecoder) schemaOfType(typ string, format string) (Schema, error) 
 	return nil, ErrInvalidJSONSchemaType
 }
 
-func (u *schemaDecoder) unmarshalFromObject(decoder *jsontext.Decoder) error {
+func (u *decoder) unmarshal(d *jsontext.Decoder) error {
 	unprocessed := bytes.NewBuffer(nil)
-	unprocessedEnc := jsontext.NewEncoder(unprocessed)
+	unprocessedenc := jsontext.NewEncoder(unprocessed)
 
-	_ = unprocessedEnc.WriteToken(jsontext.BeginObject)
+	_ = unprocessedenc.WriteToken(jsontext.BeginObject)
 
-	var schema any
-	var typ string
-	var format string
-	var additionalSchemas []Schema
+	var (
+		schema    any
+		typ       string
+		format    string
+		additions []Schema
+	)
 
-	for kind := decoder.PeekKind(); kind != '}'; kind = decoder.PeekKind() {
+	for kind := d.PeekKind(); kind != jsontext.OBJECT_E; kind = d.PeekKind() {
 		var prop string
-		if err := u.decode(decoder, &prop); err != nil {
+		if err := u.decode(d, &prop); err != nil {
 			return fmt.Errorf("decode prop failed: %w", err)
 		}
 
@@ -135,25 +139,20 @@ func (u *schemaDecoder) unmarshalFromObject(decoder *jsontext.Decoder) error {
 		switch prop {
 		case "const":
 			var value any
-			if err := u.decode(decoder, &value); err != nil {
+			if err := u.decode(d, &value); err != nil {
 				return fmt.Errorf("decode prop %s failed: %w", prop, err)
 			}
-			schema = &EnumType{
-				Enum: []any{value},
-			}
-			// skip unmarshal decode const
-			continue
+			schema = &EnumType{Enum: []any{value}}
+			continue // skip unmarshal decode const
 		case "format":
-			if err := u.decode(decoder, &format); err != nil {
+			if err := u.decode(d, &format); err != nil {
 				return fmt.Errorf("decode prop %s failed: %w", prop, err)
 			}
 			continue
 		case "enum":
 			schema = &EnumType{}
 		case "items", "prefixItems":
-			schema = &ArrayType{
-				Type: "array",
-			}
+			schema = &ArrayType{Type: "array"}
 		case "properties", "propertyNames", "patternProperties", "additionalProperties", "required":
 			schema = &ObjectType{Type: "object"}
 		case "oneOf", "discriminator":
@@ -165,64 +164,57 @@ func (u *schemaDecoder) unmarshalFromObject(decoder *jsontext.Decoder) error {
 		case "$ref":
 			schema = &RefType{}
 		case "type":
-			v, err := decoder.ReadValue()
+			v, err := d.ReadValue()
 			if err != nil {
 				return err
 			}
 			switch v.Kind() {
-			case '[':
-				var unionType []string
-
-				if err := json.Unmarshal(v, &unionType); err != nil {
+			case jsontext.ARRAY:
+				var union []string
+				if err = json.Unmarshal(v, &union); err != nil {
 					return err
 				}
-
-				if len(unionType) > 0 {
-					typ = unionType[0]
+				if len(union) > 0 {
+					typ = union[0]
 				}
-
-				for i, t := range unionType {
+				for i, t := range union {
 					if i == 0 {
 						typ = t
 						continue
 					}
-
-					s, err := u.schemaOfType(t, "")
+					s, err := u.new(t, "")
 					if err != nil {
 						return err
 					}
-
-					additionalSchemas = append(additionalSchemas, s)
+					additions = append(additions, s)
 				}
-
 				continue
 			default:
-				if err := json.Unmarshal(v, &typ); err != nil {
+				if err = json.Unmarshal(v, &typ); err != nil {
 					return err
 				}
 			}
 			continue
 		}
 
-		v, err := decoder.ReadValue()
+		v, err := d.ReadValue()
 		if err != nil {
 			return fmt.Errorf("read prop %s failed: %w", prop, err)
 		}
-
-		_ = json.MarshalEncode(unprocessedEnc, prop)
-		_ = json.MarshalEncode(unprocessedEnc, v)
+		_ = json.MarshalEncode(unprocessedenc, prop)
+		_ = json.MarshalEncode(unprocessedenc, v)
 	}
 
-	// read the EndObject to mark decoder finished
-	t, err := decoder.ReadToken()
+	// read the EndObject to mark dec finished
+	t, err := d.ReadToken()
 	if err != nil {
 		return err
 	}
-	_ = unprocessedEnc.WriteToken(t)
+	_ = unprocessedenc.WriteToken(t)
 
-	if schema == nil || len(additionalSchemas) == 0 {
+	if schema == nil || len(additions) == 0 {
 		if typ != "" {
-			s, err := u.schemaOfType(typ, format)
+			s, err := u.new(typ, format)
 			if err != nil {
 				return err
 			}
@@ -236,7 +228,7 @@ func (u *schemaDecoder) unmarshalFromObject(decoder *jsontext.Decoder) error {
 
 	// {}\n
 	if unprocessed.Len() > 3 {
-		if err := json.UnmarshalRead(unprocessed, schema, u.options); err != nil {
+		if err = json.UnmarshalRead(unprocessed, schema, u.options); err != nil {
 			return err
 		}
 	}
@@ -255,11 +247,11 @@ func (u *schemaDecoder) unmarshalFromObject(decoder *jsontext.Decoder) error {
 		}
 	}
 
-	if len(additionalSchemas) > 0 {
+	if len(additions) > 0 {
 		*u.schema = OneOf(
 			append([]Schema{
 				schema.(Schema),
-			}, additionalSchemas...)...,
+			}, additions...)...,
 		)
 	} else {
 		*u.schema = schema.(Schema)
