@@ -1,6 +1,6 @@
 
 <a name="HEAD"></a>
-## HEAD (2026-06-02)
+## HEAD (2026-06-03)
 
 ### Chore
 
@@ -16,6 +16,7 @@
 
 ### Feat
 
+* mux and example
 * handler and spec
 * validation, transformer etc...
 * **statusx:** add statusx for richer http status
