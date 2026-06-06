@@ -36,7 +36,10 @@ func (o *OpenAPI) Output(ctx context.Context) (any, error) {
 
 	if x, ok := types.OperationMetaProviderFrom(ctx); ok {
 		if u, ok := x.(OpenAPIProvider); ok {
-			return &openapi.Payload{OpenAPI: *u.OpenAPI()}, nil
+			spec := &openapi.Payload{OpenAPI: *u.OpenAPI()}
+			servers, _ := httpx.ServersFrom(ctx)
+			spec.AddServers(servers...)
+			return spec, nil
 		}
 	}
 

@@ -53,3 +53,11 @@ func (p *OpenAPI) AddOperation(method string, path string, op *OperationObject) 
 
 	operations.Set(strings.ToLower(method), op)
 }
+
+func (p *OpenAPI) AddServers(addresses ...string) {
+	servers := make([]map[string]string, 0, len(addresses))
+	for _, s := range addresses {
+		servers = append(servers, map[string]string{"url": s})
+	}
+	p.Ext.AddExtension("servers", servers)
+}

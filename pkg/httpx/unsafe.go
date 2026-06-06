@@ -1,6 +1,10 @@
 package httpx
 
-import "github.com/xoctopus/httpx/internal/types"
+import (
+	"github.com/xoctopus/x/contextx"
+
+	"github.com/xoctopus/httpx/internal/types"
+)
 
 // NOTE:
 // These exported context methods have the capability to hijack and retrieve all
@@ -22,4 +26,13 @@ var (
 	WithOperationMetaProvider  = types.WithOperationMetaProvider
 	MustOperationMetaProvider  = types.MustOperationMetaProvider
 	CarryOperationMetaProvider = types.CarryOperationMetaProvider
+)
+
+type tCtxServers struct{}
+
+var (
+	ServersFrom  = contextx.From[tCtxServers, []string]
+	WithServers  = contextx.With[tCtxServers, []string]
+	MustServers  = contextx.Must[tCtxServers, []string]
+	CarryServers = contextx.Carry[tCtxServers, []string]
 )
