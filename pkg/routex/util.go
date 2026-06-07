@@ -2,45 +2,84 @@ package routex
 
 import (
 	"fmt"
-	"io"
 	"net/http"
-	"os"
+	"strings"
 
-	"github.com/juju/ansiterm"
+	"github.com/fatih/color"
 )
 
-var colors = map[string]ansiterm.Color{
-	http.MethodHead:   ansiterm.Cyan,
-	http.MethodGet:    ansiterm.Blue,
-	http.MethodPost:   ansiterm.Green,
-	http.MethodPut:    ansiterm.Yellow,
-	http.MethodPatch:  ansiterm.Magenta,
-	http.MethodDelete: ansiterm.Red,
+var formatters = map[string]*color.Color{
+	http.MethodHead:   color.New( /*color.Bold,*/ color.FgCyan),
+	http.MethodGet:    color.New( /*color.Bold,*/ color.FgBlue),
+	http.MethodPost:   color.New( /*color.Bold,*/ color.FgGreen),
+	http.MethodPut:    color.New( /*color.Bold,*/ color.FgYellow),
+	http.MethodPatch:  color.New( /*color.Bold,*/ color.FgMagenta),
+	http.MethodDelete: color.New( /*color.Bold,*/ color.FgRed),
+	"":                color.New( /*color.Bold,*/ color.FgWhite),
 }
 
-func newFormatter(method string, writer ...io.Writer) *formatter {
-	f := &formatter{
-		foreground: ansiterm.Gray,
-		writer:     os.Stdout,
-	}
-	if c, ok := colors[method]; ok {
-		f.foreground = c
-	}
-	if len(writer) > 0 && writer[0] != nil {
-		f.writer = writer[0]
-	}
-	return f
+type meta struct {
+	Method    string
+	Path      string
+	Summary   string
+	Operators string
+
+	method string
 }
 
-type formatter struct {
-	foreground ansiterm.Color
-	writer     io.Writer
+type printer struct {
+	meta []*meta
 }
 
-func (f formatter) Printf(msg string, args ...any) (int, error) {
-	if x, ok := f.writer.(interface{ SetForeground(ansiterm.Color) }); ok {
-		x.SetForeground(f.foreground)
-		defer func() { x.SetForeground(ansiterm.Default) }()
+func (p *printer) Add(m *meta) {
+	p.meta = append(p.meta, m)
+}
+
+func (p *printer) Flush() {
+	var (
+		maxMethod  = 0
+		maxPath    = 0
+		maxSummary = 0
+		padding    = 2
+	)
+
+	for _, m := range p.meta {
+		m.method = m.Method
+		if n := len(m.Method); n > maxMethod {
+			maxMethod = n
+		}
+		if n := len(m.Path); n > maxPath {
+			maxPath = n
+		}
+		l := len(m.Summary)
+		n := len([]rune(m.Summary))
+		if l != n {
+			n = n * 2
+		}
+		if n > maxSummary {
+			maxSummary = n
+		}
 	}
-	return fmt.Fprintf(f.writer, msg, args...)
+
+	for _, m := range p.meta {
+		m.Method = fmt.Sprintf("%-*s", maxMethod+padding, m.Method)
+		m.Path = fmt.Sprintf("%-*s", maxPath+padding, m.Path)
+
+		l := len(m.Summary)
+		n := len([]rune(m.Summary))
+		if l != n {
+			n = n * 2 // Chinese character. Final width
+		}
+		c := maxSummary - n + padding
+
+		// s := MethodColorFormatter(m.method)("%s%s", m.Method, m.Path)
+		f := formatters[m.method]
+		if f == nil {
+			f = formatters[""]
+		}
+		space := strings.Repeat(" ", c)
+		s := f.Sprintf("%s%s%s%s", m.Method, m.Path, m.Summary, space)
+		fmt.Printf("%s%s\n", s, m.Operators)
+	}
+	fmt.Print("\n")
 }

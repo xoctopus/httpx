@@ -3,8 +3,8 @@ module github.com/xoctopus/httpx
 go 1.26.3
 
 require (
+	github.com/fatih/color v1.19.0
 	github.com/go-json-experiment/json v0.0.0-20260520185125-572e7c383686
-	github.com/juju/ansiterm v1.0.0
 	github.com/xoctopus/logx v0.3.1
 	github.com/xoctopus/x v0.4.7-rc3
 	golang.org/x/net v0.55.0
@@ -15,9 +15,8 @@ require (
 
 require (
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/lunixbochs/vtclean v1.0.0 // indirect
-	github.com/mattn/go-colorable v0.1.10 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.28.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect

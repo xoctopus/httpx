@@ -3,12 +3,10 @@ package routex
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"slices"
 	"sort"
 	"strings"
 
-	"github.com/juju/ansiterm"
 	"github.com/xoctopus/x/contextx"
 
 	"github.com/xoctopus/httpx/internal/openapi"
@@ -77,7 +75,7 @@ type mux struct {
 	meta       types.ServerMeta
 	operations *operations
 	tree       *path.Tree[route.Handler]
-	output     *ansiterm.TabWriter
+	printer    *printer
 }
 
 func (m *mux) register(h route.Handler) {
@@ -118,22 +116,22 @@ func (m *mux) add(r *http.ServeMux, h route.Handler) {
 	}
 	m.operations.add(info)
 	segments := h.PathSegments()
-	summary := h.Summary()
 
-	output := newFormatter(method, m.output)
-	_, _ = output.Printf("%s", method)
-	_, _ = output.Printf("\t%s", segments.PathString())
-	_, _ = fmt.Fprintf(m.output, "\t%s", summary)
-
-	f := newFormatter("", m.output)
-	_, _ = f.Printf("\t{{ ")
+	operators := &strings.Builder{}
+	_, _ = fmt.Fprintf(operators, "{{ ")
 	for i, o := range h.Operators() {
 		if i > 0 {
-			_, _ = f.Printf(" -> ")
+			_, _ = fmt.Fprintf(operators, " -> ")
 		}
-		_, _ = f.Printf("%s", o.String())
+		_, _ = fmt.Fprintf(operators, "%s", o.String())
 	}
-	_, _ = f.Printf(" }}\n")
+	_, _ = fmt.Fprintf(operators, " }}")
+	m.printer.Add(&meta{
+		Method:    method,
+		Path:      segments.PathString(),
+		Summary:   h.Summary(),
+		Operators: operators.String(),
+	})
 
 	ua := info.UA()
 	injections := []contextx.Carrier{
@@ -153,13 +151,9 @@ func (m *mux) add(r *http.ServeMux, h route.Handler) {
 }
 
 func (m *mux) build() http.Handler {
-	w := ansiterm.NewTabWriter(os.Stdout, 0, 4, 2, ' ', 0)
+	m.printer = &printer{}
+	defer m.printer.Flush()
 
-	defer func() { _ = w.Flush() }()
-	_, _ = fmt.Fprintln(w)
-	defer func() { _, _ = fmt.Fprintln(w) }()
-
-	m.output = w
 	return m.group().handler(m)
 }
 
