@@ -65,7 +65,7 @@ func (g *group) handler(m *mux) http.Handler {
 		)
 		if len(segments) > 0 {
 			r.HandleFunc(
-				PathPrefix(prefix),
+				path.Prefix(prefix),
 				func(rw http.ResponseWriter, req *http.Request) {
 					values := path.Values{}
 					remain, ok := prefix.MatchTo(values, req.URL.Path)
@@ -90,7 +90,7 @@ func (g *group) handler(m *mux) http.Handler {
 			)
 			continue
 		}
-		r.Handle(PathPrefix(prefix), hh)
+		r.Handle(path.Prefix(prefix), hh)
 	}
 	return r
 }

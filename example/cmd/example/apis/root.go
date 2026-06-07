@@ -22,3 +22,9 @@ type HealthCheck struct {
 func (HealthCheck) Output(ctx context.Context) (any, error) {
 	return nil, nil
 }
+
+// TODO
+// examples:
+// for preprocess operator. [middlewares for validation]
+// for postponed operator. [middlewares for logging]
+// for serving openapi with upgrader.Upgrader

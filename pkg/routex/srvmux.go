@@ -78,7 +78,6 @@ type mux struct {
 	operations *operations
 	tree       *path.Tree[route.Handler]
 	output     *ansiterm.TabWriter
-	// w          *ansiterm.TabWriter
 }
 
 func (m *mux) register(h route.Handler) {
@@ -124,13 +123,17 @@ func (m *mux) add(r *http.ServeMux, h route.Handler) {
 	output := newFormatter(method, m.output)
 	_, _ = output.Printf("%s", method)
 	_, _ = output.Printf("\t%s", segments.PathString())
-	_, _ = output.Printf("\t%s", summary)
+	_, _ = fmt.Fprintf(m.output, "\t%s", summary)
+
+	f := newFormatter("", m.output)
+	_, _ = f.Printf("\t{{ ")
 	for i, o := range h.Operators() {
-		if i == 0 {
-			_, _ = output.Printf("\n")
+		if i > 0 {
+			_, _ = f.Printf(" -> ")
 		}
-		_, _ = output.Printf("\t%s\n", o.String())
+		_, _ = f.Printf("%s", o.String())
 	}
+	_, _ = f.Printf(" }}\n")
 
 	ua := info.UA()
 	injections := []contextx.Carrier{
@@ -139,7 +142,7 @@ func (m *mux) add(r *http.ServeMux, h route.Handler) {
 	}
 
 	r.HandleFunc(
-		method+" "+PathPrefix(segments),
+		method+" "+path.Prefix(segments),
 		func(rw http.ResponseWriter, req *http.Request) {
 			injections = append(injections, path.CarryParamGetter(req))
 			ctx := contextx.Compose(injections...)(req.Context())

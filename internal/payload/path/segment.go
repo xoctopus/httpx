@@ -1,6 +1,7 @@
 package path
 
 import (
+	"cmp"
 	"fmt"
 	"iter"
 	"strings"
@@ -150,4 +151,28 @@ func (ss Segments) Encode(vs Values) string {
 	}
 
 	return x.PathString()
+}
+
+func Prefix(segments Segments) string {
+	s := &strings.Builder{}
+	n := len(segments)
+
+	for i, seg := range segments {
+		switch x := seg.(type) {
+		case NamedSegment:
+			s.WriteString("/")
+			if x.Multiple() && i == (n-1) {
+				s.WriteString(x.PathString())
+			} else {
+				s.WriteString("{")
+				s.WriteString(x.ParamName())
+				s.WriteString("}")
+			}
+		default:
+			s.WriteString("/")
+			s.WriteString(x.PathString())
+		}
+	}
+
+	return cmp.Or(s.String(), "/")
 }
