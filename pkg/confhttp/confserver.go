@@ -4,55 +4,65 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/xoctopus/logx"
 )
 
 type Server struct {
-	// TODO other configurations
 	Addr string `url:""`
+	Name string `url:""`
 
+	srv     *http.Server
 	handler http.Handler
 }
 
-func (s Server) Init(ctx context.Context) error {
+func (s *Server) Run(ctx context.Context) error {
 	log := logx.From(ctx)
-	srv := &http.Server{
+
+	s.srv = &http.Server{
 		ReadHeaderTimeout: 30 * time.Second,
 		Addr:              s.Addr,
 		Handler:           s.handler,
 	}
 
-	go func() {
-		log.Info("listen on %s", s.Addr)
+	log.Info("%s started and listenning on %s", s.Name, s.Addr)
+	if err := s.srv.ListenAndServe(); err != nil {
+		log.Error(err)
 
-		if err := srv.ListenAndServe(); err != nil {
-			log.Error(err)
-
-			if !errors.Is(err, http.ErrServerClosed) {
-				panic(err)
-			}
+		if !errors.Is(err, http.ErrServerClosed) {
+			panic(err)
 		}
-	}()
+		return err
+	}
+	return nil
+}
 
-	stopCh := make(chan os.Signal, 1)
-	signal.Notify(stopCh, os.Interrupt, syscall.SIGTERM)
-	<-stopCh
+func (s *Server) ApplyHandler(h http.Handler) {
+	s.handler = h
+}
 
-	timeout := 10 * time.Second
+func (s *Server) Shutdown(ctx context.Context) error {
+	if s.srv != nil {
+		timeout := 10 * time.Second
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+		logx.From(ctx).Info("%s shutdown in %s", s.Name, timeout)
 
-	log.Info("shutdowning in %s", timeout)
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 
-	return srv.Shutdown(ctx)
+		return s.srv.Shutdown(ctx)
+	}
+	return nil
+}
+
+func (s Server) Close(ctx context.Context) error {
+	if s.srv != nil {
+		return s.srv.Close()
+	}
+	return nil
 }
 
 func ListenAndServe(ctx context.Context, addr string, h http.Handler) error {
-	return (&Server{Addr: addr, handler: h}).Init(ctx)
+	return (&Server{Addr: addr, handler: h}).Run(ctx)
 }
