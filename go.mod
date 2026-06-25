@@ -8,9 +8,9 @@ require (
 	github.com/felixge/httpsnoop v1.1.0
 	github.com/go-json-experiment/json v0.0.0-20260520185125-572e7c383686
 	github.com/xoctopus/logx v0.3.1
-	github.com/xoctopus/x v0.4.7-rc3
+	github.com/xoctopus/x v0.4.9
 	golang.org/x/net v0.55.0
-	golang.org/x/sync v0.20.0
+	golang.org/x/sync v0.21.0
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	k8s.io/apimachinery v0.36.1
 )
