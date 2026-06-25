@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/xoctopus/logx"
 )
@@ -63,7 +64,7 @@ func (rw *responseWriter) Write(data []byte) (int, error) {
 		rw.WriteHeader(http.StatusOK)
 	}
 	if rw.err == nil && rw.status >= http.StatusBadRequest {
-		rw.err = errors.New(string(data))
+		rw.err = errors.New(strings.TrimSpace(string(data)))
 	}
 	n, err := rw.ResponseWriter.Write(data)
 	rw.written += int64(n)

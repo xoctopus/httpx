@@ -29,6 +29,8 @@ func main() {
 
 	h = httpx.ApplyMiddlewares(
 		middlex.InjectContext(carriers...),
+		middlex.LogHandler(),
+		middlex.DefaultCORS(),
 	)(h)
 
 	if err = confhttp.ListenAndServe(ctx, "0.0.0.0:9001", h); err != nil {
