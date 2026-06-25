@@ -7,7 +7,7 @@ require (
 	github.com/fatih/color v1.19.0
 	github.com/felixge/httpsnoop v1.1.0
 	github.com/go-json-experiment/json v0.0.0-20260520185125-572e7c383686
-	github.com/xoctopus/logx v0.3.1
+	github.com/xoctopus/logx v0.3.2
 	github.com/xoctopus/x v0.4.7-rc3
 	golang.org/x/net v0.55.0
 	golang.org/x/sync v0.20.0
