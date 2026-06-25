@@ -1,9 +1,11 @@
 module github.com/xoctopus/httpx
 
-go 1.26.3
+go 1.26.4
 
 require (
+	github.com/andybalholm/brotli v1.2.1
 	github.com/fatih/color v1.19.0
+	github.com/felixge/httpsnoop v1.1.0
 	github.com/go-json-experiment/json v0.0.0-20260520185125-572e7c383686
 	github.com/xoctopus/logx v0.3.1
 	github.com/xoctopus/x v0.4.7-rc3

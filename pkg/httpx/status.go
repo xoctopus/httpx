@@ -9,6 +9,11 @@ import (
 	"github.com/xoctopus/httpx/internal/status"
 )
 
+type (
+	StatusDescriber = status.Describer
+	StatusError     = status.Error
+)
+
 // Status presents http status code. imported from net/http/status.go
 // HTTP status codes as registered with IANA.
 // See: https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
