@@ -16,7 +16,7 @@ require (
 
 // middlex
 require (
-	github.com/andybalholm/brotli v1.2.1
+	github.com/andybalholm/brotli v1.2.2
 	github.com/felixge/httpsnoop v1.1.0
 	github.com/prometheus/client_golang v1.23.2
 	go.opentelemetry.io/contrib/propagators/b3 v1.44.0
