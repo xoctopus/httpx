@@ -46,8 +46,8 @@ github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0t
 github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-github.com/xoctopus/logx v0.3.2 h1:1zhnkxPuk5omAUTzSSBgnmVz3yLI3QYeE9DQzxDf4JU=
-github.com/xoctopus/logx v0.3.2/go.mod h1:AN40eCPofAaTaTm30KAcIvkA30bveSkR7R4uGYrghlA=
+github.com/xoctopus/logx v0.3.4 h1:QTCH3zuDwGJr0/07JxkZmSYKJE83i8WN9I7cDyAKQv4=
+github.com/xoctopus/logx v0.3.4/go.mod h1:bf54V7AoLjls9EnkvzyL5oUUMSB/VbzeJL0KZPnmGVY=
 github.com/xoctopus/x v0.4.9 h1:m6bkyMzBTTxcGnz99GJ4CvKBlCFU3K4CiQnpaeYA7PI=
 github.com/xoctopus/x v0.4.9/go.mod h1:kin3VJXnfa6Jk/2gqhjoTzZ7uA9dQtPc37ViYAr2oP8=
 github.com/xyproto/randomstring v1.0.5 h1:YtlWPoRdgMu3NZtP45drfy1GKoojuR7hmRcnhZqKjWU=
