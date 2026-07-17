@@ -37,6 +37,19 @@ func ParseNodeType(key string) (NodeType, error) {
 	}
 }
 
+// EnumValues implements enumx.CanBeEnum
+func (NodeType) EnumValues() []any {
+	return []any{
+		NODE_TYPE__ROOT,
+		NODE_TYPE__PARAMETERS,
+		NODE_TYPE__RANGE,
+		NODE_TYPE__ENUMERATIONS,
+		NODE_TYPE__REGEXP_MATCHER,
+		NODE_TYPE__REQUIREMENTS,
+		NODE_TYPE__LITERAL,
+	}
+}
+
 // Values returns enum value list of NodeType
 func (NodeType) Values() []NodeType {
 	return []NodeType{

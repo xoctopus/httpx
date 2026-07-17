@@ -27,5 +27,7 @@ func (e Error) Message() string {
 		return "[validation.Error:7] invalid input: missing required"
 	case ERROR__UNREGISTERED_RULE:
 		return "[validation.Error:8] unregistered rule"
+	case ERROR__DEC_INVALID_INPUT:
+		return "[validation.Error:9] decoder: invalid input, expecting a pointer value"
 	}
 }
