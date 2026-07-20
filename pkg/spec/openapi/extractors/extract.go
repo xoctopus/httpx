@@ -33,6 +33,7 @@ func SchemaFrom(ctx context.Context, v any, def bool) jsonschema.Schema {
 	return SchemaFromType(ctx, t, Opt{Decl: def})
 }
 
+//nolint:gocyclo
 func SchemaFromType(ctx context.Context, t reflect.Type, opt Opt) (s jsonschema.Schema) {
 	sr := SchemaRegisterFrom(ctx)
 

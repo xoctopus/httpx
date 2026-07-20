@@ -1,9 +1,18 @@
 
 <a name="HEAD"></a>
-## HEAD (2026-06-07)
+## [HEAD](https://github.com/xoctopus/httpx/compare/v0.0.1...HEAD) (2026-07-17)
 
 ### Chore
 
+* **deps:** bump lint actions
+
+
+<a name="v0.0.1"></a>
+## v0.0.1 (2026-07-02)
+
+### Chore
+
+* pretty routes output
 * move pathprefix to internal/payload/path
 * export context hijack
 * add LICENSE and gitignore
@@ -18,10 +27,13 @@
 
 ### Feat
 
+* confhttp.Server
 * openapi spec add servers
 * mux and example
 * handler and spec
 * validation, transformer etc...
+* **middlex:** add middleware for Metrics handler
+* **middlex:** add middlewares CORS, Canonical, Compress, PProf and Logging
 * **statusx:** add statusx for richer http status
 
 ### Fix

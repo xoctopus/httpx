@@ -1,17 +1,17 @@
 module github.com/xoctopus/httpx
 
-go 1.26.4
+go 1.26.5
 
 require (
 	github.com/fatih/color v1.19.0
 	github.com/go-json-experiment/json v0.0.0-20260623181947-01eb4420fa68
 	github.com/xoctopus/logx v0.3.2
-	github.com/xoctopus/x v0.4.9
+	github.com/xoctopus/x v0.5.4
 	go.opentelemetry.io/otel v1.44.0
 	golang.org/x/net v0.56.0
 	golang.org/x/sync v0.21.0
-	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
-	k8s.io/apimachinery v0.36.2
+	google.golang.org/protobuf v1.36.11
+	k8s.io/apimachinery v0.36.0-alpha.2
 )
 
 // middlex
