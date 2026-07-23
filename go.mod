@@ -8,7 +8,7 @@ require (
 	github.com/xoctopus/logx v0.3.5
 	github.com/xoctopus/x v0.5.4
 	go.opentelemetry.io/otel v1.44.0
-	golang.org/x/net v0.56.0
+	golang.org/x/net v0.57.0
 	golang.org/x/sync v0.22.0
 	google.golang.org/protobuf v1.36.11
 	k8s.io/apimachinery v0.36.0-alpha.2
@@ -36,6 +36,6 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.28.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
 )
