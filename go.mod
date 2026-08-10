@@ -11,7 +11,7 @@ require (
 	golang.org/x/net v0.57.0
 	golang.org/x/sync v0.22.0
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
-	k8s.io/apimachinery v0.37.0-beta.0
+	k8s.io/apimachinery v0.38.0-alpha.0
 )
 
 // middlex
