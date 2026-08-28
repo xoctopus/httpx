@@ -4,8 +4,9 @@
 package json
 
 import (
-	"github.com/go-json-experiment/json"
-	jsonv1 "github.com/go-json-experiment/json/v1"
+	jsonv1 "encoding/json"
+
+	"encoding/json/v2"
 
 	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
 )

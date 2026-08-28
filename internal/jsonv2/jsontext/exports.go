@@ -1,7 +1,7 @@
 package jsontext
 
 import (
-	"github.com/go-json-experiment/json/jsontext"
+	"encoding/json/jsontext"
 )
 
 // Types

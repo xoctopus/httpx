@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/go-json-experiment/json"
+	"encoding/json/v2"
 	. "github.com/xoctopus/x/testx"
 
 	"github.com/xoctopus/httpx/internal/payload/content"

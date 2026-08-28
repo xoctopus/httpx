@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/go-json-experiment/json/jsontext"
+	"encoding/json/jsontext"
 
 	"github.com/xoctopus/httpx/internal/jsonv2/json"
 	"github.com/xoctopus/httpx/internal/validation"

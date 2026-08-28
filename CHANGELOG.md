@@ -1,9 +1,15 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/httpx/compare/v0.0.1...HEAD) (2026-07-17)
+## [HEAD](https://github.com/xoctopus/httpx/compare/v0.0.1...HEAD) (2026-07-23)
 
 ### Chore
 
+* **deps:** bump k8s.io/apimachinery ([#21](https://github.com/xoctopus/httpx/issues/21))
+* **deps:** bump golang.org/x/net from 0.56.0 to 0.57.0 ([#17](https://github.com/xoctopus/httpx/issues/17))
+* **deps:** bump github.com/xoctopus/logx from 0.3.2 to 0.3.5 ([#19](https://github.com/xoctopus/httpx/issues/19))
+* **deps:** bump golang.org/x/sync from 0.21.0 to 0.22.0 ([#16](https://github.com/xoctopus/httpx/issues/16))
+* **deps:** bump github.com/andybalholm/brotli from 1.2.1 to 1.2.2 ([#14](https://github.com/xoctopus/httpx/issues/14))
+* **deps:** bump codecov/codecov-action from 5 to 7 ([#7](https://github.com/xoctopus/httpx/issues/7))
 * **deps:** bump lint actions
 
 
