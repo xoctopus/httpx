@@ -17,7 +17,7 @@ require (
 	// +skill:logx
 	github.com/xoctopus/logx v0.3.8
 	// +skill:testx
-	github.com/xoctopus/x v0.5.8
+	github.com/xoctopus/x v0.5.9
 	go.opentelemetry.io/contrib/propagators/b3 v1.46.0
 	go.opentelemetry.io/otel v1.46.0
 	golang.org/x/net v0.58.0
