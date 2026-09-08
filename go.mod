@@ -15,7 +15,7 @@ require (
 	// +skill:genx
 	github.com/xoctopus/genx v0.3.8
 	// +skill:logx
-	github.com/xoctopus/logx v0.3.8
+	github.com/xoctopus/logx v0.3.9
 	// +skill:testx
 	github.com/xoctopus/x v0.5.8
 	go.opentelemetry.io/contrib/propagators/b3 v1.46.0
