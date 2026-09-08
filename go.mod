@@ -13,7 +13,7 @@ require (
 	github.com/felixge/httpsnoop v1.1.0
 	github.com/prometheus/client_golang v1.24.1
 	// +skill:genx
-	github.com/xoctopus/genx v0.3.8
+	github.com/xoctopus/genx v0.3.9
 	// +skill:logx
 	github.com/xoctopus/logx v0.3.8
 	// +skill:testx

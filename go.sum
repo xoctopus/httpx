@@ -34,8 +34,8 @@ github.com/prometheus/procfs v0.21.1 h1:GljZCt+zSTS+NZq88cyQ1LjZ+RCHp3uVuabBWA5+
 github.com/prometheus/procfs v0.21.1/go.mod h1:aB55Cww9pdSJVHk0hUf0inxWyyjPogFIjmHKYgMKmtY=
 github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWDWE=
 github.com/stretchr/testify v1.12.1/go.mod h1:MDEgiDPPsNp5cuIrHPPCyornHKgEVbtFUmoNlxoYthg=
-github.com/xoctopus/genx v0.3.8 h1:BZ0lmpGObqdsJrcDymZtPtC2AWfnYKcpCkM3LlrlXqw=
-github.com/xoctopus/genx v0.3.8/go.mod h1:RguafX/1MCcU9hk8FRNcw2npNge16fd6cXrE5Jy4RRY=
+github.com/xoctopus/genx v0.3.9 h1:E7jvS+FDZH6DrOIU/ZbKYMcFlx+sArNokPX2eA8Q/34=
+github.com/xoctopus/genx v0.3.9/go.mod h1:RguafX/1MCcU9hk8FRNcw2npNge16fd6cXrE5Jy4RRY=
 github.com/xoctopus/logx v0.3.8 h1:AXDEZVwqcEY+zioU/15W9FfbdZIobKLgmMEEx5oSui4=
 github.com/xoctopus/logx v0.3.8/go.mod h1:QVYXBhThICU6YaoJF5m+tB6EAwZC8fw1zB5ehMqzVTU=
 github.com/xoctopus/pkgx v0.4.4 h1:dSqD5NdR+ekdIKNE7UiHciyDA80B6RDoqNGNfESmqDw=
