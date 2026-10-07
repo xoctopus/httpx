@@ -2,12 +2,11 @@ package jsonschema
 
 import (
 	"bytes"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
-
-	"github.com/xoctopus/httpx/internal/jsonv2/json"
-	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
 )
 
 type Schema interface {
@@ -50,10 +49,10 @@ func (u *decoder) UnmarshalJSONFrom(d *jsontext.Decoder) error {
 	}
 
 	switch startToken.Kind() {
-	case jsontext.TRUE:
+	case jsontext.KindTrue:
 		*u.schema = &AnyType{}
 		return nil
-	case jsontext.OBJECT:
+	case jsontext.KindBeginObject:
 		return u.unmarshal(d)
 	}
 
@@ -118,7 +117,7 @@ func (u *decoder) unmarshal(d *jsontext.Decoder) error {
 		additions []Schema
 	)
 
-	for kind := d.PeekKind(); kind != jsontext.OBJECT_E; kind = d.PeekKind() {
+	for kind := d.PeekKind(); kind != jsontext.KindEndObject; kind = d.PeekKind() {
 		var prop string
 		if err := u.decode(d, &prop); err != nil {
 			return fmt.Errorf("decode prop failed: %w", err)
@@ -169,7 +168,7 @@ func (u *decoder) unmarshal(d *jsontext.Decoder) error {
 				return err
 			}
 			switch v.Kind() {
-			case jsontext.ARRAY:
+			case jsontext.KindBeginArray:
 				var union []string
 				if err = json.Unmarshal(v, &union); err != nil {
 					return err

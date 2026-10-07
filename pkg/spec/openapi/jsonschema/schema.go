@@ -2,9 +2,8 @@ package jsonschema
 
 import (
 	"bytes"
-
-	"github.com/xoctopus/httpx/internal/jsonv2/json"
-	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 )
 
 type OpenAPISchemaGetter interface {

@@ -1,11 +1,11 @@
 package validation
 
 import (
+	"encoding/json/jsontext"
 	"reflect"
 
 	"github.com/xoctopus/x/codex"
 
-	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
 	"github.com/xoctopus/httpx/internal/validation/rule"
 )
 
@@ -60,7 +60,7 @@ func (o *wrapped) KeyRule() rule.Rule {
 }
 
 func (o *wrapped) Validate(value []byte) error {
-	if jsontext.Value(value).Kind() == jsontext.NULL && !o.optional {
+	if jsontext.Value(value).Kind() == jsontext.KindNull && !o.optional {
 		return codex.New(ERROR__MISSING_REQUIRED)
 	}
 	if o.Validator == nil {

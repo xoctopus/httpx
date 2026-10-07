@@ -1,11 +1,11 @@
 package validators
 
 import (
+	"encoding/json/jsontext"
 	"regexp"
 
 	"github.com/xoctopus/x/codex"
 
-	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
 	"github.com/xoctopus/httpx/internal/validation"
 	"github.com/xoctopus/httpx/internal/validation/rule"
 )
@@ -67,7 +67,7 @@ func (v *UserDefined) String() string {
 }
 
 func (v *UserDefined) Validate(value []byte) error {
-	if k := jsontext.Value(value).Kind(); k != jsontext.STRING {
+	if k := jsontext.Value(value).Kind(); k != jsontext.KindString {
 		return codex.Errorf(validation.ERROR__INPUT_TYPE, "expect: string got: %s", k)
 	}
 

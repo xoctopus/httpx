@@ -2,6 +2,8 @@ package validation_test
 
 import (
 	"bytes"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"net"
 	"reflect"
@@ -12,8 +14,6 @@ import (
 	"github.com/xoctopus/x/misc/must"
 	. "github.com/xoctopus/x/testx"
 
-	"github.com/xoctopus/httpx/internal/jsonv2/json"
-	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
 	"github.com/xoctopus/httpx/internal/scanner"
 	"github.com/xoctopus/httpx/internal/validation"
 	"github.com/xoctopus/httpx/internal/validation/rule"
@@ -361,7 +361,7 @@ func TestUnmarshalDecode(t *testing.T) {
 			u = validation.Map(f.GetOrNewAt(re), va)
 			err, ok := errors.AsType[*json.SemanticError](u.UnmarshalDecode(d))
 			Expect(t, ok, BeTrue())
-			Expect(t, err.JSONKind, Equal(jsontext.STRING))
+			Expect(t, err.JSONKind, Equal(jsontext.KindString))
 		})
 	})
 

@@ -3,10 +3,10 @@ package transformer
 import (
 	"bytes"
 	"context"
+	"encoding/json/jsontext"
 	"io"
 	"reflect"
 
-	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
 	"github.com/xoctopus/httpx/internal/payload/content"
 	"github.com/xoctopus/httpx/internal/scanner"
 	"github.com/xoctopus/httpx/pkg/validation"

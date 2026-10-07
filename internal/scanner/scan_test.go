@@ -1,6 +1,7 @@
 package scanner_test
 
 import (
+	"encoding/json/v2"
 	"reflect"
 	"slices"
 	"testing"
@@ -9,7 +10,6 @@ import (
 	"github.com/xoctopus/x/slicex"
 	. "github.com/xoctopus/x/testx"
 
-	"github.com/xoctopus/httpx/internal/jsonv2/json"
 	"github.com/xoctopus/httpx/internal/scanner"
 )
 

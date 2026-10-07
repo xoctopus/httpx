@@ -1,14 +1,13 @@
 package internal
 
 import (
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"io"
 	"iter"
 
 	"github.com/xoctopus/x/container/list"
-
-	"github.com/xoctopus/httpx/internal/jsonv2/json"
-	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
 )
 
 type Pair[K comparable, V any] struct {

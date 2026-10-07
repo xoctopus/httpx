@@ -1,12 +1,11 @@
 package status
 
 import (
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/xoctopus/httpx/internal/jsonv2/json"
 )
 
 func AsDescription(err error, src, loc string) *Description {

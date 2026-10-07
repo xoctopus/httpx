@@ -1,11 +1,11 @@
 package status_test
 
 import (
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"net/http"
 
-	"github.com/xoctopus/httpx/internal/jsonv2/json"
 	"github.com/xoctopus/httpx/internal/status"
 	"github.com/xoctopus/httpx/internal/validation"
 	"github.com/xoctopus/httpx/pkg/httpx"

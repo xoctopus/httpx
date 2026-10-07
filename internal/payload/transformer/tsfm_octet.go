@@ -3,12 +3,12 @@ package transformer
 import (
 	"bytes"
 	"context"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"io"
 	"mime"
 	"reflect"
 
-	"github.com/xoctopus/httpx/internal/jsonv2/json"
-	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
 	"github.com/xoctopus/httpx/internal/payload/content"
 	"github.com/xoctopus/httpx/internal/scanner"
 	"github.com/xoctopus/httpx/pkg/validation"

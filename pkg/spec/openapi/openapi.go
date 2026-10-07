@@ -1,9 +1,9 @@
 package openapi
 
 import (
+	"encoding/json/v2"
 	"strings"
 
-	"github.com/xoctopus/httpx/internal/jsonv2/json"
 	"github.com/xoctopus/httpx/pkg/spec/openapi/internal"
 	"github.com/xoctopus/httpx/pkg/spec/openapi/jsonschema"
 )

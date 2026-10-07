@@ -2,11 +2,11 @@ package transformer
 
 import (
 	"context"
+	"encoding/json/jsontext"
 	"io"
 	"net/url"
 	"reflect"
 
-	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
 	"github.com/xoctopus/httpx/internal/payload/content"
 	"github.com/xoctopus/httpx/pkg/validation"
 )
@@ -102,7 +102,7 @@ func (w *urlencodedWriter) WriteDecoder(d *jsontext.Decoder) error {
 	if err != nil {
 		return err
 	}
-	if tok.Kind() != jsontext.OBJECT {
+	if tok.Kind() != jsontext.KindBeginObject {
 		return nil
 	}
 
@@ -114,11 +114,11 @@ func (w *urlencodedWriter) WriteDecoder(d *jsontext.Decoder) error {
 		}
 
 		switch val.Kind() {
-		case jsontext.NULL:
+		case jsontext.KindNull:
 			return false, nil
-		case jsontext.FALSE, jsontext.TRUE, jsontext.NUMBER:
+		case jsontext.KindFalse, jsontext.KindTrue, jsontext.KindNumber:
 			goto FINISH
-		case jsontext.STRING:
+		case jsontext.KindString:
 			val, err = jsontext.AppendUnquote(nil, val)
 			if err != nil {
 				return false, err
@@ -138,7 +138,7 @@ func (w *urlencodedWriter) WriteDecoder(d *jsontext.Decoder) error {
 	}
 
 	i, written := 0, false
-	for d.PeekKind() != jsontext.OBJECT_E {
+	for d.PeekKind() != jsontext.KindEndObject {
 		tok, err = d.ReadToken()
 		if err != nil {
 			return err
@@ -147,11 +147,11 @@ func (w *urlencodedWriter) WriteDecoder(d *jsontext.Decoder) error {
 
 		var val jsontext.Value
 		switch kind := d.PeekKind(); kind {
-		case jsontext.ARRAY:
+		case jsontext.KindBeginArray:
 			if _, err = d.ReadToken(); err != nil {
 				return err
 			}
-			for d.PeekKind() != jsontext.ARRAY_E {
+			for d.PeekKind() != jsontext.KindEndArray {
 				val, err = d.ReadValue()
 				if err != nil {
 					return err

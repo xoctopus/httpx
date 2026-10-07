@@ -3,13 +3,13 @@ package validation
 import (
 	"bytes"
 	"encoding"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"reflect"
 
 	"github.com/xoctopus/x/codex"
 	"github.com/xoctopus/x/misc/must"
 
-	"github.com/xoctopus/httpx/internal/jsonv2/json"
-	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
 	"github.com/xoctopus/httpx/internal/scanner"
 	"github.com/xoctopus/httpx/internal/validation/rule"
 )
@@ -72,7 +72,7 @@ type pointer struct {
 }
 
 func (pv *pointer) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error {
-	if d.PeekKind() == jsontext.NULL {
+	if d.PeekKind() == jsontext.KindNull {
 		raw, err := d.ReadValue()
 		if err != nil {
 			return err
@@ -197,7 +197,7 @@ func (pv *primitive) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) err
 		err error
 	)
 	switch tok {
-	case jsontext.ARRAY:
+	case jsontext.KindBeginArray:
 		pos = d.StackPointer()
 		if _, err = d.ReadToken(); err != nil {
 			return err
@@ -209,7 +209,7 @@ func (pv *primitive) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) err
 		raw = val.String()
 
 		// skip others
-		for d.PeekKind() != jsontext.ARRAY_E {
+		for d.PeekKind() != jsontext.KindEndArray {
 			if _, err = d.ReadValue(); err != nil {
 				return err
 			}
@@ -226,7 +226,7 @@ func (pv *primitive) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) err
 	}
 
 	val = jsontext.Value(raw)
-	if val.Kind() == jsontext.STRING {
+	if val.Kind() == jsontext.KindString {
 		if !pv.text {
 			if val, err = jsontext.AppendUnquote(nil, val); err != nil {
 				return err
@@ -266,7 +266,7 @@ func (av *array) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error {
 	}
 	k := tok.Kind()
 	switch k {
-	case jsontext.NULL:
+	case jsontext.KindNull:
 		pos := d.StackPointer()
 		if va := av.Validator; va != nil {
 			if err = va.Validate([]byte("null")); err != nil {
@@ -275,7 +275,7 @@ func (av *array) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error {
 		}
 		av.SetZero()
 		return nil
-	case jsontext.ARRAY:
+	case jsontext.KindBeginArray:
 		var eva Validator // element validator
 
 		if av.Cap() > 0 {
@@ -293,7 +293,7 @@ func (av *array) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error {
 		}
 
 		i, zero := 0, true
-		for d.PeekKind() != jsontext.ARRAY_E {
+		for d.PeekKind() != jsontext.KindEndArray {
 			if i == av.Cap() {
 				av.Grow(1)
 				av.SetLen(av.Cap())
@@ -343,7 +343,7 @@ type _any struct {
 }
 
 func (bv *_any) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error {
-	if d.PeekKind() == jsontext.NULL {
+	if d.PeekKind() == jsontext.KindNull {
 		// TODO should need to check optional
 		if _, err := d.ReadToken(); err != nil {
 			return err
@@ -381,14 +381,14 @@ func (cv *_struct) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error
 	switch k {
 	default:
 		return &json.SemanticError{JSONKind: k, GoType: cv.Type()}
-	case jsontext.NULL:
+	case jsontext.KindNull:
 		if cv.Validator != nil {
 			if err := cv.Validate(jsontext.Value("null")); err != nil {
 				return WrapPositionError(err, d.StackPointer())
 			}
 		}
 		return cv.Each(d, json.JoinOptions(o...))
-	case jsontext.OBJECT:
+	case jsontext.KindBeginObject:
 		s, err := scanner.Structs.Scan(cv.Type())
 		if err != nil {
 			return err
@@ -408,7 +408,7 @@ func (cv *_struct) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error
 		}
 
 		seen := make(map[string]struct{})
-		for d.PeekKind() != jsontext.OBJECT_E {
+		for d.PeekKind() != jsontext.KindEndObject {
 			var tok jsontext.Token
 			tok, err = d.ReadToken()
 			if err != nil {
@@ -533,7 +533,7 @@ func (kv *_map) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error {
 
 	k := tok.Kind()
 	switch k {
-	case jsontext.NULL:
+	case jsontext.KindNull:
 		if kv.Validator != nil {
 			if err = kv.Validate([]byte("null")); err != nil {
 				return WrapPositionError(err, d.StackPointer())
@@ -541,7 +541,7 @@ func (kv *_map) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error {
 		}
 		kv.SetZero()
 		return nil
-	case jsontext.OBJECT:
+	case jsontext.KindBeginObject:
 		if kv.IsNil() {
 			kv.Set(reflect.MakeMap(kv.Type()))
 		}
@@ -570,7 +570,7 @@ func (kv *_map) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error {
 
 		// NOTE: no need to check duplicate key. JSON decoder will check when ReadValue
 		// if jsontext.AllowDuplicateNames is configurated.
-		for d.PeekKind() != jsontext.OBJECT_E {
+		for d.PeekKind() != jsontext.KindEndObject {
 			vk.SetZero()
 			if err = vk.UnmarshalDecode(d, o...); err != nil {
 				return err

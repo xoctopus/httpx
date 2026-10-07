@@ -2,6 +2,7 @@ package transformer
 
 import (
 	"encoding"
+	"encoding/json/v2"
 	"fmt"
 	"io"
 	"reflect"
@@ -12,7 +13,6 @@ import (
 	"github.com/xoctopus/x/reflectx"
 	"github.com/xoctopus/x/syncx"
 
-	"github.com/xoctopus/httpx/internal/jsonv2/json"
 	"github.com/xoctopus/httpx/internal/payload/content"
 )
 

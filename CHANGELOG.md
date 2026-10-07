@@ -1,9 +1,15 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/httpx/compare/v0.0.1...HEAD) (2026-07-23)
+## [HEAD](https://github.com/xoctopus/httpx/compare/v0.0.2...HEAD) (0001-01-01)
+
+
+<a name="v0.0.2"></a>
+## [v0.0.2](https://github.com/xoctopus/httpx/compare/v0.0.1...v0.0.2) (2026-08-28)
 
 ### Chore
 
+* bump Go to 1.27.0
+* **deps:** upgrade dependencies
 * **deps:** bump k8s.io/apimachinery ([#21](https://github.com/xoctopus/httpx/issues/21))
 * **deps:** bump golang.org/x/net from 0.56.0 to 0.57.0 ([#17](https://github.com/xoctopus/httpx/issues/17))
 * **deps:** bump github.com/xoctopus/logx from 0.3.2 to 0.3.5 ([#19](https://github.com/xoctopus/httpx/issues/19))

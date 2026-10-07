@@ -1,6 +1,8 @@
 package jsonschema
 
 import (
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -10,9 +12,6 @@ import (
 	"strconv"
 
 	"github.com/xoctopus/x/container/list"
-
-	"github.com/xoctopus/httpx/internal/jsonv2/json"
-	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
 )
 
 func ObjectOf(props map[string]Schema, required ...string) *ObjectType {

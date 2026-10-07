@@ -2,12 +2,11 @@ package validation
 
 import (
 	"bytes"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 
-	"encoding/json/jsontext"
-
-	"github.com/xoctopus/httpx/internal/jsonv2/json"
 	"github.com/xoctopus/httpx/internal/validation"
 )
 

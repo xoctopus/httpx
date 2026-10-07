@@ -2,14 +2,13 @@ package scanner
 
 import (
 	"cmp"
+	"encoding/json/v2"
 	"iter"
 	"reflect"
 	"slices"
 
 	"github.com/xoctopus/x/misc/must"
 	"github.com/xoctopus/x/syncx"
-
-	"github.com/xoctopus/httpx/internal/jsonv2/json"
 )
 
 var Structs = &structs{

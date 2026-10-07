@@ -3,6 +3,7 @@ package transformer
 import (
 	"bytes"
 	"context"
+	"encoding/json/jsontext"
 	"fmt"
 	"io"
 	"iter"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/xoctopus/x/codex"
 
-	"github.com/xoctopus/httpx/internal/jsonv2/jsontext"
 	"github.com/xoctopus/httpx/internal/payload"
 	"github.com/xoctopus/httpx/internal/payload/content"
 	"github.com/xoctopus/httpx/internal/payload/path"
@@ -130,7 +130,7 @@ func (p *parameter) UnmarshalValues(ctx context.Context, f *scanner.Field, value
 		if x, ok := va.(validation.WithDefaults); ok {
 			if v := x.Defaults(); len(v) > 0 {
 				d := jsontext.Value(v)
-				if d.Kind() == jsontext.STRING {
+				if d.Kind() == jsontext.KindString {
 					unquoted, err := jsontext.AppendUnquote(nil, d)
 					if err != nil {
 						return err
