@@ -1,4 +1,4 @@
-package middlex
+package midx
 
 import (
 	"net/http"
@@ -12,7 +12,7 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 
 	"github.com/xoctopus/httpx/pkg/httpx"
-	"github.com/xoctopus/httpx/pkg/middlex/internal/logginghandler"
+	"github.com/xoctopus/httpx/pkg/midx/internal/logginghandler"
 )
 
 func LogHandler() func(http.Handler) http.Handler {

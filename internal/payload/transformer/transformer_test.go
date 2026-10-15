@@ -112,11 +112,9 @@ func TestTransformer(t *testing.T) {
 			InBody `in:"body"`
 		}
 		op1 := T{
-			InBody: InBody{
-				Name: "abc",
-				Data: []byte("def"),
-				List: []string{"v1", "v2"},
-			},
+			Name: "abc",
+			Data: []byte("def"),
+			List: []string{"v1", "v2"},
 		}
 
 		req, err := transformer.NewRequest(context.Background(), "POST", "/root", op1)
@@ -189,12 +187,10 @@ test
 		}
 
 		op1 := T{
-			Data: Data{
-				A:      "string",
-				B:      5,
-				C:      true,
-				Filter: []string{"p1", "p2"},
-			},
+			A:      "string",
+			B:      5,
+			C:      true,
+			Filter: []string{"p1", "p2"},
 		}
 		req, err := transformer.NewRequest(context.Background(), "POST", "/", op1)
 		Expect(t, err, Succeed())
@@ -225,27 +221,25 @@ a=string&b=5&c=true&filter=p1&filter=p2
 		}
 
 		op1 := T{
-			Data: Data{
-				Part0: "abc",
-				Part1: 1,
-				Part2: 2.01,
-				Part3: []bool{true, false},
-				Part4: File{
-					filename: "part4.txt",
+			Part0: "abc",
+			Part1: 1,
+			Part2: 2.01,
+			Part3: []bool{true, false},
+			Part4: File{
+				filename: "part4.txt",
+				media:    "text/plain",
+				content:  []byte("part4-content"),
+			},
+			Part5: []File{
+				{
+					filename: "part5-0.txt",
 					media:    "text/plain",
-					content:  []byte("part4-content"),
+					content:  []byte("part5-0-content"),
 				},
-				Part5: []File{
-					{
-						filename: "part5-0.txt",
-						media:    "text/plain",
-						content:  []byte("part5-0-content"),
-					},
-					{
-						filename: "part5-1.txt",
-						media:    "text/plain",
-						content:  []byte("part5-1-content"),
-					},
+				{
+					filename: "part5-1.txt",
+					media:    "text/plain",
+					content:  []byte("part5-1-content"),
 				},
 			},
 		}

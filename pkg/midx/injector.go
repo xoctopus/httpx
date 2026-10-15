@@ -1,4 +1,4 @@
-package middlex
+package midx
 
 import (
 	"net/http"

@@ -1,42 +1,25 @@
 package client
 
-import (
-	"context"
-	"crypto/tls"
-	"net"
-	"net/http"
-
-	"golang.org/x/net/http2"
-)
-
-func ConvertTransportForH2C(t http.RoundTripper) http.RoundTripper {
-	if x, ok := t.(*http.Transport); ok {
-		if !x.DisableKeepAlives {
-			return &http2.Transport{
-				DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-					return x.DialContext(ctx, network, addr)
-				},
-				IdleConnTimeout: x.IdleConnTimeout,
-				ReadIdleTimeout: x.ResponseHeaderTimeout,
-				AllowHTTP:       true,
-			}
-		}
-	}
-	return t
-}
+import "net/http"
 
 func H2CTransport(t http.RoundTripper) http.RoundTripper {
-	if x, ok := t.(*http.Transport); ok {
-		if !x.DisableKeepAlives {
-			return &http2.Transport{
-				DialTLSContext: func(ctx context.Context, network, addr string, cfg *tls.Config) (net.Conn, error) {
-					return x.DialContext(ctx, network, addr)
-				},
-				IdleConnTimeout: x.IdleConnTimeout,
-				ReadIdleTimeout: x.ResponseHeaderTimeout,
-				AllowHTTP:       true,
-			}
-		}
+	x, ok := t.(*http.Transport)
+	if !ok || x.DisableKeepAlives {
+		return t
 	}
-	return t
+
+	tr := x.Clone()
+	p := &http.Protocols{}
+	p.SetHTTP1(true)
+	p.SetUnencryptedHTTP2(true)
+	tr.Protocols = p
+
+	if tr.ResponseHeaderTimeout > 0 {
+		if tr.HTTP2 == nil {
+			tr.HTTP2 = &http.HTTP2Config{}
+		}
+		tr.HTTP2.SendPingTimeout = tr.ResponseHeaderTimeout
+	}
+
+	return tr
 }

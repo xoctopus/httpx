@@ -10,7 +10,7 @@ import (
 	"github.com/xoctopus/httpx/example/pkg/modules/user"
 	"github.com/xoctopus/httpx/pkg/confhttp"
 	"github.com/xoctopus/httpx/pkg/httpx"
-	"github.com/xoctopus/httpx/pkg/middlex"
+	"github.com/xoctopus/httpx/pkg/midx"
 	"github.com/xoctopus/httpx/pkg/routex"
 )
 
@@ -28,9 +28,9 @@ func main() {
 	}
 
 	h = httpx.ApplyMiddlewares(
-		middlex.InjectContext(carriers...),
-		middlex.LogHandler(),
-		middlex.DefaultCORS(),
+		midx.InjectContext(carriers...),
+		midx.LogHandler(),
+		midx.DefaultCORS(),
 	)(h)
 
 	if err = confhttp.ListenAndServe(ctx, "0.0.0.0:9001", h); err != nil {

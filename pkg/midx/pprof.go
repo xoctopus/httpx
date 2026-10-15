@@ -1,9 +1,9 @@
-package middlex
+package midx
 
 import (
 	"net/http"
 
-	"github.com/xoctopus/httpx/pkg/middlex/internal/pprofhandler"
+	"github.com/xoctopus/httpx/pkg/midx/internal/pprofhandler"
 )
 
 func PProfHandler(enabled bool) func(handler http.Handler) http.Handler {

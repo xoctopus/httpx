@@ -1,10 +1,10 @@
-package middlex
+package midx
 
 import (
 	"net/http"
 	"strings"
 
-	"github.com/xoctopus/httpx/pkg/middlex/internal/corshandler"
+	"github.com/xoctopus/httpx/pkg/midx/internal/corshandler"
 )
 
 // copy from https://github.com/gorilla/handlers/blob/master/cors.go

@@ -1,9 +1,9 @@
-package middlex
+package midx
 
 import (
 	"net/http"
 
-	"github.com/xoctopus/httpx/pkg/middlex/internal/canonicalhandler"
+	"github.com/xoctopus/httpx/pkg/midx/internal/canonicalhandler"
 )
 
 // copy from https://github.com/gorilla/handlers/blob/main/canonical.go

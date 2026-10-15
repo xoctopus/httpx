@@ -1,6 +1,10 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/httpx/compare/v0.0.2...HEAD) (0001-01-01)
+## [HEAD](https://github.com/xoctopus/httpx/compare/v0.0.2...HEAD) (2026-10-07)
+
+### Refactor
+
+* adopt std encoding/json/v2 and drop internal/jsonv2 shim
 
 
 <a name="v0.0.2"></a>

@@ -1,10 +1,10 @@
-package middlex
+package midx
 
 import (
 	"compress/gzip"
 	"net/http"
 
-	"github.com/xoctopus/httpx/pkg/middlex/internal/compresshandler"
+	"github.com/xoctopus/httpx/pkg/midx/internal/compresshandler"
 )
 
 func Compress(level int) func(h http.Handler) http.Handler {
