@@ -401,7 +401,7 @@ func (b *oass) scanResponseError(ctx context.Context, op *oas.OperationObject, o
 func (b *oass) scanParameterOrRequestBody(ctx context.Context, op *oas.OperationObject, t reflect.Type) {
 	var dp docx.Provider
 
-	if d, ok := reflect.New(t).Interface().(docx.Provider); ok {
+	if d, ok := reflect.TypeAssert[docx.Provider](reflect.New(t)); ok {
 		dp = d
 	}
 

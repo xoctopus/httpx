@@ -108,11 +108,9 @@ func (m *mux) add(r *http.ServeMux, h route.Handler) {
 
 	info := &types.OperationMeta{
 		ServerMeta: m.meta,
-		RequestMeta: types.RequestMeta{
-			ID:     h.OperationID(),
-			Method: h.Method(),
-			Route:  h.Path(),
-		},
+		ID:         h.OperationID(),
+		Method:     h.Method(),
+		Route:      h.Path(),
 	}
 	m.operations.add(info)
 	segments := h.PathSegments()

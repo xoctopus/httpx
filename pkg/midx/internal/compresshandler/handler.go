@@ -32,7 +32,7 @@ func HandlerLevel(level int) func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// detect what encoding to use
 			var encoding string
-			for _, curEnc := range strings.Split(r.Header.Get(AcceptEncoding), ",") {
+			for curEnc := range strings.SplitSeq(r.Header.Get(AcceptEncoding), ",") {
 				curEnc = strings.TrimSpace(curEnc)
 				if curEnc == brEncoding || curEnc == gzipEncoding {
 					encoding = curEnc

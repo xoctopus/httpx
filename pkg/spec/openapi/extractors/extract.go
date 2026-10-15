@@ -33,13 +33,15 @@ func SchemaFrom(ctx context.Context, v any, def bool) jsonschema.Schema {
 	return SchemaFromType(ctx, t, Opt{Decl: def})
 }
 
+// SchemaFromType analyze schema from reflect.Type
+//
 //nolint:gocyclo
 func SchemaFromType(ctx context.Context, t reflect.Type, opt Opt) (s jsonschema.Schema) {
 	sr := SchemaRegisterFrom(ctx)
 
 	fill := func(tref string) {
 		if _, ok := s.(*jsonschema.RefType); !ok {
-			if x, ok := reflect.New(t).Interface().(validation.TagValidator); ok {
+			if x, ok := reflect.TypeAssert[validation.TagValidator](reflect.New(t)); ok {
 				if text := x.ValidationTag(); len(text) > 0 {
 					p, err := PatchSchemaValidation(s, validation.Option{
 						Type: t,

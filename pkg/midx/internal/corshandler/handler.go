@@ -2,6 +2,7 @@ package corshandler
 
 import (
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -121,14 +122,11 @@ func (ch *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if ch.AllowedOriginValidator == nil && len(ch.AllowedOrigins) == 0 {
 		returnOrigin = "*"
 	} else {
-		for _, o := range ch.AllowedOrigins {
-			// A configuration of * is different than explicitly setting an allowed
-			// origin. Returning arbitrary origin headers in an access control allow
-			// origin header is unsafe and is not required by any use case.
-			if o == CorsOriginMatchAll {
-				returnOrigin = "*"
-				break
-			}
+		// A configuration of * is different than explicitly setting an allowed
+		// origin. Returning arbitrary origin headers in an access control allow
+		// origin header is unsafe and is not required by any use case.
+		if slices.Contains(ch.AllowedOrigins, CorsOriginMatchAll) {
+			returnOrigin = "*"
 		}
 	}
 
@@ -164,13 +162,7 @@ func (ch *Cors) IsOriginAllowed(origin string) bool {
 }
 
 func (ch *Cors) IsMatch(needle string, haystack []string) bool {
-	for _, v := range haystack {
-		if v == needle {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(haystack, needle)
 }
 
 func (ch *Cors) SetHandler(h http.Handler) {

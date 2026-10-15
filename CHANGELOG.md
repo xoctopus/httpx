@@ -1,10 +1,11 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/httpx/compare/v0.0.2...HEAD) (2026-10-07)
+## [HEAD](https://github.com/xoctopus/httpx/compare/v0.0.2...HEAD) (2026-10-15)
 
 ### Refactor
 
 * adopt std encoding/json/v2 and drop internal/jsonv2 shim
+* **midx:** rename middlex, add docs and BDD tests
 
 
 <a name="v0.0.2"></a>

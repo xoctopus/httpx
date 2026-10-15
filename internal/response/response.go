@@ -246,7 +246,7 @@ func (r *response[T]) WriteResponse(ctx context.Context, rw http.ResponseWriter,
 }
 
 func ErrorResponse(e error) error {
-	return &errorResponse{response: response[error]{v: e}}
+	return &errorResponse{response[error]{v: e}}
 }
 
 type errorResponse struct {

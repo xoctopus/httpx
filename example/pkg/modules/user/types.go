@@ -3,6 +3,7 @@ package user
 import "github.com/xoctopus/x/contextx"
 
 type Controller interface {
+	Get()
 }
 
 type tCtxUser struct{}

@@ -204,7 +204,7 @@ func (r *result) Into(v any) (httpx.Metadata, error) {
 func (r *result) into(v any) error {
 	rv := reflect.ValueOf(v)
 
-	media := strings.Split(r.Response.Header.Get("Content-Type"), ";")[0]
+	media, _, _ := strings.Cut(r.Response.Header.Get("Content-Type"), ";")
 	if x, ok := v.(content.MediaTypeDescriber); ok {
 		media = x.ContentType()
 	}

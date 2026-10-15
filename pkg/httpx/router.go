@@ -2,6 +2,7 @@ package httpx
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/xoctopus/httpx/internal/operator"
 	"github.com/xoctopus/httpx/internal/route"
@@ -31,8 +32,8 @@ func BasePathRouter(path string) Router {
 func ApplyMiddlewares(middlewares ...Middleware) Middleware {
 	return func(final http.Handler) http.Handler {
 		last := final
-		for i := len(middlewares) - 1; i >= 0; i-- {
-			last = middlewares[i](last)
+		for _, middleware := range slices.Backward(middlewares) {
+			last = middleware(last)
 		}
 		return last
 	}
