@@ -132,4 +132,14 @@ func TestNewFactory(t *testing.T) {
 	o3, ok := x.(*OpCanBeInitialized)
 	Expect(t, ok, BeTrue())
 	Expect(t, o3.V, Equal(300))
+
+	f = NewFactory(&EmptyOperator{}, false)
+	x = f.New()
+	o4, ok := x.(*EmptyOperator)
+	Expect(t, ok, BeTrue())
+	Expect(t, f.String(), Equal("operator.EmptyOperator"))
+	o4.NoOutput()
+	res, err := o4.Output(context.Background())
+	Expect(t, res, BeNil[any]())
+	Expect(t, err, BeNil[error]())
 }

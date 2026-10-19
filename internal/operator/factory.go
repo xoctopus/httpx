@@ -8,6 +8,8 @@ import (
 	"github.com/xoctopus/x/misc/must"
 )
 
+// NewFactory builds registration metadata from a prototype operator. last is true
+// when op is the final step in the route chain (its Output becomes the HTTP response).
 func NewFactory(op Operator, last bool) *Factory {
 	f := &Factory{
 		Type:     TypeOfOperator(reflect.TypeOf(op)),
@@ -35,6 +37,7 @@ func NewFactory(op Operator, last bool) *Factory {
 	return f
 }
 
+// Factory holds compile-time metadata for one pipeline step and creates per-request operators.
 type Factory struct {
 	Type       reflect.Type
 	ContextKey any
@@ -59,6 +62,8 @@ func (f *Factory) String() string {
 	return s
 }
 
+// New creates a request-scoped operator: [Newer.New] or reflect.New, then
+// [InitializerFrom] and [DefaultSetter] when implemented.
 func (f *Factory) New() (op Operator) {
 	if x, ok := f.Operator.(Newer); ok {
 		op = x.New()

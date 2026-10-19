@@ -1,6 +1,14 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/httpx/compare/v0.0.2...HEAD) (2026-10-15)
+## [HEAD](https://github.com/xoctopus/httpx/compare/v0.0.2...HEAD) (2026-10-19)
+
+### Chore
+
+* **ci:** enable golangci modernize and apply fixes
+
+### Docs
+
+* **method:** document HTTP verb capability package
 
 ### Refactor
 
