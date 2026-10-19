@@ -113,7 +113,7 @@ func (c *Client) newreq(ctx context.Context, r any, metas ...httpx.Metadata) (*h
 	req.URL.Host = c.endpoint.Host
 	req.URL.Path = path.Clean(c.endpoint.Path + req.URL.Path)
 
-	for k, vs := range httpx.MergeMetadata(metas...) {
+	for k, vs := range metadata.Merge(metas...) {
 		for _, v := range vs {
 			req.Header.Add(k, v)
 		}

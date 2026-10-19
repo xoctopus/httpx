@@ -19,7 +19,3 @@ type (
 	Metadata        = metadata.Metadata
 	MetadataCarrier = metadata.Carrier
 )
-
-var (
-	MergeMetadata = metadata.Merge
-)
