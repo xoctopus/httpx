@@ -1,6 +1,6 @@
 module github.com/xoctopus/httpx
 
-go 1.27.0
+go 1.27.3
 
 tool (
 	github.com/xoctopus/httpx/internal/cmd/gen
