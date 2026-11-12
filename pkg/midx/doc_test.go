@@ -24,12 +24,12 @@ func Example() {
 
 	base := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name, _ := userCtx.From(r.Context())
-		fmt.Fprintln(w, name)
+		_, _ = fmt.Fprintln(w, name)
 	})
 
 	h := httpx.ApplyMiddlewares(
 		midx.InjectContext(carriers...),
-		midx.LogHandler(),
+		midx.LogHandler(true),
 		midx.DefaultCORS(),
 	)(base)
 

@@ -16,6 +16,8 @@ type ResponseWriter interface {
 	StatusCode() int
 	// StatusError if status code >= 400 treat write content as errorString
 	StatusError() error
+	// ContentLength
+	ContentLength() int64
 }
 
 func NewResponseWriter(rw http.ResponseWriter) ResponseWriter {
@@ -79,14 +81,19 @@ func (rw *responseWriter) StatusError() error {
 	return rw.err
 }
 
+func (rw *responseWriter) ContentLength() int64 {
+	return rw.written
+}
+
+// OmitAuthorization returns the query of u with authorization params removed.
+// u is not modified.
 func OmitAuthorization(u *url.URL) string {
 	q := u.Query()
 
 	q.Del("authorization")
 	q.Del("x-param-header-Authorization")
 
-	u.RawQuery = q.Encode()
-	return u.String()
+	return q.Encode()
 }
 
 var LogLevels = map[string]logx.LogLevel{

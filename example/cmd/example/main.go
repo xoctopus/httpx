@@ -29,7 +29,7 @@ func main() {
 
 	h = httpx.ApplyMiddlewares(
 		midx.InjectContext(carriers...),
-		midx.LogHandler(),
+		midx.DefaultLogHandler(),
 		midx.DefaultCORS(),
 	)(h)
 

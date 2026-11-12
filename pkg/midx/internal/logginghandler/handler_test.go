@@ -19,7 +19,8 @@ func TestOmitAuthorization(t *testing.T) {
 
 		t.When("OmitAuthorization is applied", func(t bdd.T) {
 			got := logginghandler.OmitAuthorization(u)
-			t.Then("sensitive params are stripped", bdd.Equal(got, "https://api.example/v1?q=1"))
+			t.Then("sensitive params are stripped", bdd.Equal(got, "q=1"))
+			t.Then("url is not modified", bdd.Equal(u.RawQuery, "authorization=secret&x-param-header-Authorization=token&q=1"))
 		})
 	})
 }

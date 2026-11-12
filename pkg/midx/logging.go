@@ -1,59 +1,96 @@
 package midx
 
 import (
+	"fmt"
+	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/xoctopus/logx"
-	"go.opentelemetry.io/contrib/propagators/b3"
-	"go.opentelemetry.io/otel/propagation"
-
+	"github.com/xoctopus/httpx/internal/types"
 	"github.com/xoctopus/httpx/pkg/httpx"
 	"github.com/xoctopus/httpx/pkg/midx/internal/logginghandler"
+	"github.com/xoctopus/httpx/pkg/midx/otel"
+	"github.com/xoctopus/logx"
+	"go.opentelemetry.io/contrib/propagators/b3"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/propagation"
+	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
+	"go.opentelemetry.io/otel/semconv/v1.43.0/httpconv"
 )
 
-func LogHandler() func(http.Handler) http.Handler {
+// Access log keys written by [LogHandler], follow OTel semconv attribute names.
+// ref: https://opentelemetry.io/docs/specs/semconv/http/http-spans/#http-server
+const (
+	LogKeyClientAddress   = string(semconv.ClientAddressKey)
+	LogKeyRequestMethod   = string(semconv.HTTPRequestMethodKey)
+	LogKeyProtocolVersion = string(semconv.NetworkProtocolVersionKey)
+	LogKeyURLPath         = string(semconv.URLPathKey)
+	LogKeyURLQuery        = string(semconv.URLQueryKey)
+	LogKeyUserAgent       = string(semconv.UserAgentOriginalKey)
+	LogKeyStatusCode      = string(semconv.HTTPResponseStatusCodeKey)
+)
+
+// logKeyDuration reuses the metric name http.server.request.duration, value in seconds.
+var logKeyDuration = (httpconv.ServerRequestDuration{}).Name()
+
+func DefaultLogHandler() func(http.Handler) http.Handler {
+	return LogHandler(false)
+}
+
+func LogHandler(enableOTel bool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 			var (
 				ctx     = req.Context()
-				ts      = time.Now()
-				lrw     = logginghandler.NewResponseWriter(rw)
 				info, _ = httpx.OperationMetaFrom(ctx)
+				lrw     = logginghandler.NewResponseWriter(rw)
+				attrs   []attribute.KeyValue
 			)
 
-			ctx = b3.New().Extract(ctx, propagation.HeaderCarrier(req.Header))
-			b3.New().Inject(ctx, propagation.HeaderCarrier(lrw.Header()))
+			if info == nil {
+				info = &types.OperationMeta{ID: "unknown"}
+			}
 
-			if info != nil {
+			if enableOTel {
+				ctx = b3.New().Extract(ctx, propagation.HeaderCarrier(req.Header))
+				b3.New().Inject(ctx, propagation.HeaderCarrier(lrw.Header()))
+
 				var span logx.Logger
 				ctx, span = logx.From(ctx).Start(ctx, info.ID)
 				defer span.End()
+
+				attrs = ExtractBasicAttrs(req)
+				otel.ServerActiveRequests.Add(ctx, 1, metric.WithAttributes(attrs...))
+				defer otel.ServerActiveRequests.Add(ctx, -1, metric.WithAttributes(attrs...))
 			}
 
+			now := time.Now()
 			next.ServeHTTP(lrw, req.WithContext(ctx))
-			cost := time.Since(ts)
+			cost := time.Since(now)
 
 			lvl := logx.LogLevelInfo
-			if v := req.Header.Get("x-enable-log-level"); v != "" {
+			if v := req.Header.Get("X-Enable-Log-Level"); v != "" {
 				if x, ok := logginghandler.LogLevels[strings.ToLower(v)]; ok {
 					lvl = x
 				}
 			}
-
+			proto := strconv.Itoa(req.ProtoMajor)
+			if req.ProtoMajor < 2 {
+				proto += "." + strconv.Itoa(req.ProtoMinor)
+			}
 			log := logx.From(ctx).With(
-				"http.client_ip", httpx.ClientIP(req),
-				"http.method", req.Method,
-				"http.proto", req.Proto,
-				"http.url", logginghandler.OmitAuthorization(req.URL),
-				"http.status", lrw.StatusCode(),
-				"http.ua", req.Header.Get("User-Agent"),
-				"http.srv.cost(ms)", cost.Milliseconds(),
+				slog.String(LogKeyClientAddress, httpx.ClientIP(req)),
+				slog.String(LogKeyRequestMethod, req.Method),
+				slog.String(LogKeyProtocolVersion, proto),
+				slog.String(LogKeyURLPath, req.URL.Path),
+				slog.String(LogKeyURLQuery, logginghandler.OmitAuthorization(req.URL)),
+				slog.String(LogKeyUserAgent, req.Header.Get("User-Agent")),
+				slog.Int(LogKeyStatusCode, lrw.StatusCode()),
+				slog.Float64(logKeyDuration, cost.Seconds()),
 			)
-
 			if err := lrw.StatusError(); err != nil {
 				if lrw.StatusCode() >= http.StatusInternalServerError {
 					log.Error(err)
@@ -67,22 +104,35 @@ func LogHandler() func(http.Handler) http.Handler {
 					log.Info("success")
 				}
 			}
+
+			if enableOTel {
+				attrs = append(attrs, ExtractRouteAttrs(lrw.StatusCode(), info, req)...)
+				otel.ServerDuration.Record(ctx, cost.Seconds(), metric.WithAttributes(attrs...))
+				otel.ServerRequestSize.Record(ctx, req.ContentLength, metric.WithAttributes(attrs...))
+				otel.ServerResponseSize.Record(ctx, lrw.ContentLength(), metric.WithAttributes(attrs...))
+			}
 		})
 	}
 }
 
-func MetricHandler(gatherer prometheus.Gatherer) func(http.Handler) http.Handler {
-	h := promhttp.HandlerFor(gatherer, promhttp.HandlerOpts{
-		EnableOpenMetrics: true,
-	})
+func ExtractBasicAttrs(req *http.Request) []attribute.KeyValue {
+	scheme := "http"
+	if req.TLS != nil {
+		scheme = "https"
+	}
 
-	return func(handler http.Handler) http.Handler {
-		return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-			if strings.HasPrefix(req.URL.Path, "/.sys/metrics") {
-				h.ServeHTTP(rw, req)
-				return
-			}
-			handler.ServeHTTP(rw, req)
-		})
+	return []attribute.KeyValue{
+		semconv.HTTPRequestMethodKey.String(req.Method),
+		semconv.URLSchemeKey.String(scheme),
+	}
+}
+
+func ExtractRouteAttrs(status int, info *types.OperationMeta, req *http.Request) []attribute.KeyValue {
+	return []attribute.KeyValue{
+		semconv.HTTPRouteKey.String(info.Route),
+		semconv.HTTPRequestMethodKey.String(req.Method),
+		semconv.HTTPResponseStatusCodeKey.Int(status),
+		semconv.NetworkProtocolNameKey.String(strings.ToLower(strings.Split(req.Proto, "/")[0])),
+		semconv.NetworkProtocolVersionKey.String(fmt.Sprintf("%d.%d", req.ProtoMajor, req.ProtoMinor)),
 	}
 }
