@@ -4,6 +4,7 @@
 
 ### Chore
 
+* update CHANGELOG
 * format code
 * ignore agent and editor generated files
 * ignore generated openspec commands and skills
@@ -21,6 +22,7 @@
 ### Feat
 
 * **midx:** adopt OTel semconv for access log and split metric handler
+* **status:** resolve error responses as RFC 9457 problem details
 
 ### Fix
 

@@ -23,7 +23,7 @@
 ## 4. 验收与发布说明
 
 - [x] 4.1 `example/cmd/example/main_test.go` 的验收测试全部通过 (`go test ./example/cmd/example/`): 服务启动, confclient 请求, `Result.Into` 解码
-- [ ] 4.2 提交信息带 `BREAKING CHANGE` 脚注, 列出 BREAKING 项与迁移方式 (`code` 语义, `key` / `title` 不再兜底, 选项改名 `WithResponse*`, 移除 `WithContentLength`, `ErrorResponse` 作为返回值中断链路, 响应选项优先于解析结果; 并说明客户端 `Into` 仍回填); 提交后运行 `make changelog` 生成 CHANGELOG
+- [x] 4.2 提交信息带 `BREAKING CHANGE` 脚注, 列出 BREAKING 项与迁移方式 (`code` 语义, `key` / `title` 不再兜底, 选项改名 `WithResponse*`, 移除 `WithContentLength`, `ErrorResponse` 作为返回值中断链路, 响应选项优先于解析结果; 并说明客户端 `Into` 仍回填); 提交后运行 `make changelog` 生成 CHANGELOG
 - [x] 4.3 集成检查: `go vet ./...`, `go test ./...`, `golangci-lint run` 全部通过; `openspec validate define-response-model --strict` 通过 (`pkg/midx` `TestLogHandler` 的 B3 断言暂时注释, 为本期之前已存在的问题, 见 review.midx.01 #5, 由 midx 自己的提交修复)
 
 ## Workflow follow-up
