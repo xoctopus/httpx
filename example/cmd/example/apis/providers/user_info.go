@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/xoctopus/confx/pkg/confjwt"
-	"github.com/xoctopus/httpx/example/pkg/modules/user"
 	"github.com/xoctopus/x/misc/must"
+
+	"github.com/xoctopus/httpx/example/pkg/modules/user"
 )
 
 type tCtxCurrentUserInfo struct{}

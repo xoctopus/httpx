@@ -3,9 +3,10 @@ package user
 import (
 	"context"
 
+	"github.com/xoctopus/x/slicex"
+
 	"github.com/xoctopus/httpx/example/pkg/modules/user"
 	"github.com/xoctopus/httpx/pkg/httpx"
-	"github.com/xoctopus/x/slicex"
 )
 
 type ListUsers struct {

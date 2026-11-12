@@ -7,9 +7,10 @@ import (
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/xoctopus/x/testx/bdd"
+
 	"github.com/xoctopus/httpx/internal/testutil"
 	"github.com/xoctopus/httpx/pkg/midx"
-	"github.com/xoctopus/x/testx/bdd"
 )
 
 func TestMetricHandler(t *testing.T) {

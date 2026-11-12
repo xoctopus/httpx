@@ -8,10 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xoctopus/httpx/internal/types"
-	"github.com/xoctopus/httpx/pkg/httpx"
-	"github.com/xoctopus/httpx/pkg/midx/internal/logginghandler"
-	"github.com/xoctopus/httpx/pkg/midx/otel"
 	"github.com/xoctopus/logx"
 	"go.opentelemetry.io/contrib/propagators/b3"
 	"go.opentelemetry.io/otel/attribute"
@@ -19,6 +15,11 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
 	"go.opentelemetry.io/otel/semconv/v1.43.0/httpconv"
+
+	"github.com/xoctopus/httpx/internal/types"
+	"github.com/xoctopus/httpx/pkg/httpx"
+	"github.com/xoctopus/httpx/pkg/midx/internal/logginghandler"
+	"github.com/xoctopus/httpx/pkg/midx/otel"
 )
 
 // Access log keys written by [LogHandler], follow OTel semconv attribute names.

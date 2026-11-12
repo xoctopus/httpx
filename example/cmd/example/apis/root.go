@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/xoctopus/confx/pkg/confjwt"
+
 	"github.com/xoctopus/httpx/example/cmd/example/apis/login"
 	"github.com/xoctopus/httpx/example/cmd/example/apis/providers"
 	"github.com/xoctopus/httpx/example/cmd/example/apis/user"
