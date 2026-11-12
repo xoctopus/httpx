@@ -17,7 +17,7 @@ func NewSegment(part string) Segment {
 	}
 
 	if part[0] == '{' {
-		np := &namedSegment{name: part[1 : len(part)-1]}
+		np := namedSegment{name: part[1 : len(part)-1]}
 		if strings.HasSuffix(np.name, "...") {
 			np.name = np.name[0 : len(np.name)-3]
 			np.multiple = true
