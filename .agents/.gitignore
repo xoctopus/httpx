@@ -1,3 +1,7 @@
 skills/genx
 skills/logx
 skills/testx
+skills/openspec*
+skills/.openspec-target
+workflows/opsx-*
+commands
