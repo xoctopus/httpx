@@ -21,3 +21,6 @@
 go.work
 
 *syncthing*
+
+.claude/commands/opsx
+.claude/skills/openspec*
