@@ -2,84 +2,93 @@ package status
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/xoctopus/x/slicex"
 )
 
-func AsResponse(err error, source string) *Response {
+// MediaType of error response, see RFC 9457
+const MediaType = "application/problem+json"
+
+// AsResponse resolves err as the root of problem details. the top level takes
+// the identity layer above errors.Join if any, otherwise the first entry.
+func AsResponse(err error, src string) *Response {
 	if err == nil {
 		return nil
 	}
 
-	var (
-		er       *Response
-		location = ""
-	)
+	top, entries := resolve(err, resolution{}, src)
+	rsp := &Response{Errors: entries, Desc: err.Error()}
 
-	for e := range ErrorsFrom(err) {
-		if x, ok := e.(HasLocation); ok {
-			location = x.Location()
-			continue
-		}
-
-		ee := AsDescription(e, source, location)
-		if er == nil {
-			er = &Response{
-				Code:    ee.Status.StatusCode(),
-				Message: ee.Message,
-			}
-			if ee.Status != nil && ee.Status.StatusCode() == http.StatusBadRequest {
-				er.Message = ee.Status.StatusText()
-			}
-		}
-
-		if len(ee.Errors) > 0 {
-			er.Errors = append(er.Errors, ee.Errors...)
-		} else {
-			er.Errors = append(er.Errors, ee)
-		}
+	switch {
+	case top.ident || len(entries) == 0 || entries[0] == nil:
+		rsp.Code, rsp.Key, rsp.Title, rsp.Detail = top.code, top.key, top.title, top.detail
+	default:
+		e := entries[0]
+		rsp.Code, rsp.Key, rsp.Title, rsp.Detail = e.Code, e.Key, e.Title, e.Detail
 	}
 
-	if er == nil {
-		return &Response{
-			Code:    http.StatusInternalServerError,
-			Message: err.Error(),
-		}
+	rsp.status = top.status
+	if rsp.status <= 0 && len(entries) > 0 {
+		rsp.status = entries[0].Status
 	}
-
-	return er
+	if rsp.status <= 0 {
+		rsp.status = top.statusCode()
+	}
+	return rsp
 }
 
+// Response is the root of problem details. json fields follow RFC 9457 where
+// the semantics match; the others are extension members. status and instance
+// are not serialized: http status code is in status line, and the operation is
+// identified by `Server` header.
 type Response struct {
-	// 错误码
-	Code int `json:"code,omitzero"`
-	// 错误信息
-	Message string `json:"message,omitzero"`
-	// 错误详情
-	Errors []*Description `json:"errors,omitzero"`
+	// Code biz code
+	Code int64 `json:"code,omitzero"`
+	// Key code identifier
+	Key string `json:"key,omitzero"`
+	// Title code hint, the same for every occurrence of the problem
+	Title string `json:"title,omitzero"`
+	// Detail explanation of this occurrence, for client not for debugging
+	Detail string `json:"detail,omitzero"`
+	// Errors problems occurred in the same request
+	Errors []*Detail `json:"errors,omitzero"`
 
-	Extra map[string]any `json:",inline"`
+	// Desc the full text of the error, for logging only, never presented
+	Desc string `json:"-"`
+
+	// status http status code
+	status int
 }
 
-// StatusCode returns http.StatusCode
-// For extending the semantics of HTTP status codes, the original HTTP status codes
-// are multiplied to represent specific business logic errors.
-// For example:
-// http.StatusBadRequest = 400
-// 400000001: Missing field A
-// 400000002: Invalid field B
+// SetStatusCode overrides status code, see Modifier
+func (e *Response) SetStatusCode(code int) {
+	e.status = code
+}
+
 func (e *Response) StatusCode() int {
-	if e.Code > 999 {
-		i, _ := strconv.ParseUint(strconv.FormatUint(uint64(e.Code), 10)[0:3], 10, 64)
-		return int(i)
-	}
-	return e.Code
+	return e.status
+}
+
+func (e *Response) StatusText() string {
+	return http.StatusText(e.status)
+}
+
+func (e *Response) SetTitle(title string) {
+	e.Title = title
+}
+
+func (e *Response) SetDetail(detail string) {
+	e.Detail = detail
 }
 
 func (e *Response) Unwrap() []error {
-	if e.Errors != nil {
-		return slicex.M(e.Errors, func(e *Description) error { return e })
+	if len(e.Errors) > 0 {
+		return slicex.FilterMapping(
+			e.Errors,
+			func(e *Detail) (error, bool) {
+				return e, e != nil
+			},
+		)
 	}
 	return nil
 }

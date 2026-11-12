@@ -379,13 +379,13 @@ func (b *oass) scanResponseError(ctx context.Context, op *oas.OperationObject, o
 
 			mt := &oas.MediaTypeObject{}
 
-			if e, ok := errors.AsType[*status.Description](returnErrors[0]); ok {
+			if e, ok := errors.AsType[*status.Detail](returnErrors[0]); ok {
 				mt.Schema = b.SchemaFromType(ctx, &status.Response{}, false)
 			} else {
 				mt.Schema = b.SchemaFromType(ctx, e, false)
 			}
 
-			errResp.AddContent("application/json", mt)
+			errResp.AddContent(status.MediaType, mt)
 
 			if found, ok := errResp.GetExtension("x-status-return-errors"); ok {
 				errResp.AddExtension("x-status-return-errors", append(found.([]string), codes[statusCode]...))

@@ -1,6 +1,7 @@
 package httpx
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/xoctopus/httpx/internal/response"
@@ -11,31 +12,37 @@ type (
 	ResponseApplier = response.Applier
 )
 
-func WithStatusCode[Code ~int](code Code) ResponseApplier {
+func WithResponseStatusCode[Code ~int](code Code) ResponseApplier {
 	return func(m response.Modifier) {
 		m.SetStatusCode(int(code))
 	}
 }
 
-func WithCookies(cookies ...*http.Cookie) ResponseApplier {
+func WithResponseCookies(cookies ...*http.Cookie) ResponseApplier {
 	return func(m response.Modifier) {
 		m.SetCookies(cookies)
 	}
 }
 
-func WithContentType(t string) ResponseApplier {
+func WithResponseContentType(t string) ResponseApplier {
 	return func(m response.Modifier) {
 		m.SetContentType(t)
 	}
 }
 
-func WithContentLength(n int64) ResponseApplier {
+func WithResponseTitle(title string) ResponseApplier {
 	return func(m response.Modifier) {
-		m.SetContentLength(n)
+		m.SetTitle(title)
 	}
 }
 
-func WithMetadata(key string, values ...string) ResponseApplier {
+func WithResponseDetail(format string, args ...any) ResponseApplier {
+	return func(m response.Modifier) {
+		m.SetDetail(fmt.Sprintf(format, args...))
+	}
+}
+
+func WithResponseMetadata(key string, values ...string) ResponseApplier {
 	return func(m response.Modifier) {
 		m.SetMetadata(key, values...)
 	}
@@ -59,10 +66,6 @@ func ErrorResponse(err error, appliers ...ResponseApplier) Response[error] {
 	for _, apply := range appliers {
 		apply(mod)
 	}
-
-	// // TODO
-	// if rsp.StatusCode() == 0 {
-	// }
 
 	return rsp
 }

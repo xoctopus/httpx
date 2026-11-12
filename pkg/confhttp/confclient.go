@@ -149,7 +149,7 @@ func (r *result) Into(v any) (httpx.Metadata, error) {
 		if r.client.NewError != nil {
 			v = r.client.NewError()
 		} else {
-			v = &status.Description{Source: r.Response.Request.Host}
+			v = &status.Detail{Src: r.Response.Request.Host}
 		}
 	}
 

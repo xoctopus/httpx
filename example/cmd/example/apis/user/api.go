@@ -1,12 +1,15 @@
 package user
 
-import "github.com/xoctopus/httpx/pkg/httpx"
+import (
+	"github.com/xoctopus/httpx/example/cmd/example/apis/providers"
+	"github.com/xoctopus/httpx/pkg/httpx"
+)
 
 var R = httpx.NewRouter()
 
 func init() {
-	R.Register(httpx.NewRouter(&CookieRefresh{}))
-	R.Register(httpx.NewRouter(&RegisterMember{}))
-	R.Register(httpx.NewRouter(&DeleteMemberByID{}))
-	R.Register(httpx.NewRouter(&ListMembers{}))
+	R.Register(httpx.NewRouter(&ListUsers{}))
+	R.Register(httpx.NewRouter(&FetchByUsername{}))
+	R.Register(httpx.NewRouter(&providers.UserPermission{}, &DeleteUserByUserID{}))
+	R.Register(httpx.NewRouter(&providers.UserPermission{}, &PromoteUserLevel{}))
 }

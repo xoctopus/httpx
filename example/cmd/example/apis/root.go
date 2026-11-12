@@ -3,16 +3,18 @@ package apis
 import (
 	"context"
 
+	"github.com/xoctopus/confx/pkg/confjwt"
+	"github.com/xoctopus/httpx/example/cmd/example/apis/login"
+	"github.com/xoctopus/httpx/example/cmd/example/apis/providers"
 	"github.com/xoctopus/httpx/example/cmd/example/apis/user"
 	"github.com/xoctopus/httpx/pkg/httpx"
 	"github.com/xoctopus/httpx/pkg/routex"
 )
 
-var R = httpx.GroupRouter("/api/example/v0").With(
-	httpx.NewRouter(&routex.OpenAPI{}),
-	httpx.GroupRouter("/user").With(user.R),
-	// httpx.GroupRouter("org").With(org.R),
-	httpx.NewRouter(&HealthCheck{}),
+var (
+	Root = httpx.GroupRouter("/example")
+	v0   = httpx.GroupRouter("/v0")
+	auth = httpx.NewRouter(&confjwt.Auth{}, &providers.CurrentUserInfo{})
 )
 
 type HealthCheck struct {
@@ -21,6 +23,23 @@ type HealthCheck struct {
 
 func (HealthCheck) Output(ctx context.Context) (any, error) {
 	return nil, nil
+}
+
+func init() {
+	auth = auth.With(
+		httpx.GroupRouter("/user").With(user.R),
+	)
+
+	v0 = v0.With(
+		auth,
+		httpx.NewRouter(&routex.OpenAPI{}),
+		httpx.NewRouter(&HealthCheck{}),
+		httpx.NewRouter(&login.LoginByUsername{}),
+		httpx.NewRouter(&login.UserRegister{}),
+		httpx.NewRouter(&login.CookieRefresh{}),
+	)
+
+	Root = Root.With(v0)
 }
 
 // TODO

@@ -2,6 +2,7 @@ package transformer
 
 import (
 	"context"
+	"encoding/json/jsontext"
 	"errors"
 	"io"
 	"mime"
@@ -14,6 +15,7 @@ import (
 	"github.com/xoctopus/httpx/internal/payload/content"
 	"github.com/xoctopus/httpx/internal/request"
 	"github.com/xoctopus/httpx/internal/scanner"
+	"github.com/xoctopus/httpx/internal/validation"
 )
 
 func init() {
@@ -99,13 +101,13 @@ func (t *multipartT) Into(ctx context.Context, r io.ReadCloser, v any) error {
 			}
 
 			if err = pv.UnmarshalReaders(ctx, sf, readers); err != nil {
-				return err
+				return validation.PrefixPointer(err, jsontext.Pointer("").AppendToken(sf.Name))
 			}
 			continue
 		}
 
 		if err = pv.UnmarshalValues(ctx, sf, form.Value[sf.Name]); err != nil {
-			return err
+			return validation.PrefixPointer(err, jsontext.Pointer("").AppendToken(sf.Name))
 		}
 	}
 

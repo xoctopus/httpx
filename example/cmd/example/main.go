@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"time"
 
+	"github.com/xoctopus/confx/pkg/confjwt"
+	"github.com/xoctopus/confx/pkg/types"
 	"github.com/xoctopus/logx"
 	"github.com/xoctopus/x/contextx"
 
 	"github.com/xoctopus/httpx/example/cmd/example/apis"
-	"github.com/xoctopus/httpx/example/pkg/modules/user"
 	"github.com/xoctopus/httpx/pkg/confhttp"
 	"github.com/xoctopus/httpx/pkg/httpx"
 	"github.com/xoctopus/httpx/pkg/midx"
@@ -17,19 +19,26 @@ import (
 func main() {
 	ctx := logx.With(context.Background(), logx.NewStd())
 
-	h, err := routex.NewHandler(apis.R, "example")
+	h, err := routex.NewHandler(
+		apis.Root,
+		"example@v0.0.1",
+		midx.DefaultLogHandler(),
+	)
 	if err != nil {
 		panic(err)
 	}
 
 	// services injections
 	carriers := []contextx.Carrier{
-		user.Carry(user.New()),
+		confjwt.CarryJWT(&confjwt.JWT{
+			Issuer:  "example",
+			ExpIn:   types.Duration(time.Hour),
+			SignKey: "x",
+		}),
 	}
 
 	h = httpx.ApplyMiddlewares(
 		midx.InjectContext(carriers...),
-		midx.DefaultLogHandler(),
 		midx.DefaultCORS(),
 	)(h)
 

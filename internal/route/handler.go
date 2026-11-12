@@ -13,6 +13,7 @@ import (
 	"github.com/xoctopus/httpx/internal/operator"
 	"github.com/xoctopus/httpx/internal/payload/path"
 	"github.com/xoctopus/httpx/internal/request"
+	"github.com/xoctopus/httpx/internal/response"
 	"github.com/xoctopus/httpx/internal/transport"
 	"github.com/xoctopus/httpx/internal/types"
 )
@@ -218,6 +219,12 @@ func (h *_handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		v, err := o.Output(ctx)
 		if err != nil {
 			t.WriteResponse(ctx, rw, err, ri)
+			return
+		}
+
+		// an error response returned as value interrupts like an error
+		if _, ok := v.(response.Response[error]); ok {
+			t.WriteResponse(ctx, rw, v, ri)
 			return
 		}
 

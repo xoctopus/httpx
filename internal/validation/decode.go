@@ -5,6 +5,7 @@ import (
 	"encoding"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
+	"errors"
 	"reflect"
 
 	"github.com/xoctopus/x/codex"
@@ -80,7 +81,7 @@ func (pv *pointer) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error
 		pos := d.StackPointer()
 		if va := pv.Validator; va != nil {
 			if err = va.Validate(raw); err != nil {
-				return WrapPositionError(err, pos)
+				return WrapPointer(err, pos)
 			}
 		}
 		if pv.CanSet() {
@@ -120,11 +121,15 @@ func (vv *value) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error {
 	}
 
 	typ := vv.Type()
-	pos := d.StackPointer()
 
 	if reflect.PointerTo(typ).Implements(tJsonUnmarshalerFrom) {
 		if err := json.UnmarshalDecode(d, vv.Addr().Interface(), o...); err != nil {
-			return WrapPositionError(err, pos)
+			// json/v2 reports the position relative to the root of d
+			pos := d.StackPointer()
+			if serr, ok := errors.AsType[*json.SemanticError](err); ok && serr.JSONPointer != "" {
+				pos = serr.JSONPointer
+			}
+			return WrapPointer(err, pos)
 		}
 		return nil
 	}
@@ -134,10 +139,15 @@ func (vv *value) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error {
 		if err != nil {
 			return err
 		}
+		pos := d.StackPointer()
 		raw := string(val)
 		u := vv.Addr().Interface().(json.Unmarshaler)
 		if err = u.UnmarshalJSON([]byte(raw)); err != nil {
-			return WrapPositionError(err, pos)
+			// the position of v1 UnmarshalJSON is relative to the nested value, see json/v2.collapseSemanticErrors
+			if serr, ok := errors.AsType[*json.SemanticError](err); ok {
+				pos += serr.JSONPointer
+			}
+			return WrapPointer(err, pos)
 		}
 		return nil
 	}
@@ -198,7 +208,6 @@ func (pv *primitive) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) err
 	)
 	switch tok {
 	case jsontext.KindBeginArray:
-		pos = d.StackPointer()
 		if _, err = d.ReadToken(); err != nil {
 			return err
 		}
@@ -218,12 +227,14 @@ func (pv *primitive) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) err
 			return err
 		}
 	default:
-		pos = d.StackPointer()
 		if val, err = d.ReadValue(); err != nil {
 			return err
 		}
 		raw = val.String()
 	}
+	// StackPointer points to the most recently read value, so it must be taken
+	// after reading, otherwise it points to the previous array element.
+	pos = d.StackPointer()
 
 	val = jsontext.Value(raw)
 	if val.Kind() == jsontext.KindString {
@@ -235,11 +246,11 @@ func (pv *primitive) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) err
 	}
 	if va := pv.Validator; va != nil {
 		if err = va.Validate(val); err != nil {
-			return WrapPositionError(err, pos)
+			return WrapPointer(err, pos)
 		}
 	}
 	if err = json.Unmarshal(val, pv.Value.Addr().Interface(), o...); err != nil {
-		return WrapPositionError(err, pos)
+		return WrapPointer(err, pos)
 	}
 	return nil
 }
@@ -270,7 +281,7 @@ func (av *array) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error {
 		pos := d.StackPointer()
 		if va := av.Validator; va != nil {
 			if err = va.Validate([]byte("null")); err != nil {
-				return WrapPositionError(err, pos)
+				return WrapPointer(err, pos)
 			}
 		}
 		av.SetZero()
@@ -317,7 +328,7 @@ func (av *array) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error {
 		}
 		if post, ok := av.Validator.(PostValidator); ok {
 			if err = post.PostValidate(av.Value); err != nil {
-				return WrapPositionError(err, d.StackPointer())
+				return WrapPointer(err, d.StackPointer())
 			}
 		}
 		if i == 0 {
@@ -384,7 +395,7 @@ func (cv *_struct) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error
 	case jsontext.KindNull:
 		if cv.Validator != nil {
 			if err := cv.Validate(jsontext.Value("null")); err != nil {
-				return WrapPositionError(err, d.StackPointer())
+				return WrapPointer(err, d.StackPointer())
 			}
 		}
 		return cv.Each(d, json.JoinOptions(o...))
@@ -510,7 +521,7 @@ func (cv *_struct) each(s *scanner.Struct, seen map[string]struct{}, d *jsontext
 		d2 := jsontext.NewDecoder(bytes.NewBuffer(defaults), o2)
 
 		if err = v.UnmarshalDecode(d2, o2); err != nil {
-			return WrapPositionError(err, pos+"/"+jsontext.Pointer(f.Name))
+			return PrefixPointer(err, pos.AppendToken(f.Name))
 		}
 	}
 	return nil
@@ -536,7 +547,7 @@ func (kv *_map) UnmarshalDecode(d *jsontext.Decoder, o ...json.Options) error {
 	case jsontext.KindNull:
 		if kv.Validator != nil {
 			if err = kv.Validate([]byte("null")); err != nil {
-				return WrapPositionError(err, d.StackPointer())
+				return WrapPointer(err, d.StackPointer())
 			}
 		}
 		kv.SetZero()

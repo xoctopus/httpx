@@ -2,25 +2,23 @@ package user
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/xoctopus/httpx/example/pkg/modules/user"
 	"github.com/xoctopus/httpx/pkg/httpx"
 )
 
-type DeleteMemberByID struct {
-	httpx.MethodDelete `path:"/{userID}"`
+type DeleteUserByUserID struct {
+	httpx.MethodDelete `path:"/{userID}" summary:"删除用户"`
 
 	UserID int64 `in:"path" name:"userID"`
 }
 
-func (req *DeleteMemberByID) Output(ctx context.Context) (any, error) {
-	return httpx.ErrorResponse(httpx.STATUS__FORBIDDEN.Wrap(&user.ErrorForbidden{})), nil
+func (req *DeleteUserByUserID) Output(ctx context.Context) (any, error) {
+	return nil, fmt.Errorf("UnknownError")
 }
 
 // ResponseErrors implements openapi.ResponseErrorsSpecified for spec generating
-func (DeleteMemberByID) ResponseErrors() []error {
-	return []error{
-		user.ErrorForbidden{},
-		user.ErrorNotFound{},
-	}
+func (DeleteUserByUserID) ResponseErrors() []error {
+	// TODO
+	return nil
 }

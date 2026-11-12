@@ -57,6 +57,8 @@ type response[T any] struct {
 	location  *url.URL
 	media     string
 	status    int
+	title     string
+	detail    string
 	timestamp time.Time
 }
 
@@ -107,6 +109,14 @@ func (r *response[T]) SetMetadata(key string, values ...string) {
 	}
 }
 
+func (r *response[T]) SetTitle(title string) {
+	r.title = title
+}
+
+func (r *response[T]) SetDetail(detail string) {
+	r.detail = detail
+}
+
 func (r *response[T]) SetCookies(cookies []*http.Cookie) {
 	r.cookies = cookies
 }
@@ -140,11 +150,25 @@ func (r *response[T]) WriteResponse(ctx context.Context, rw http.ResponseWriter,
 
 	if err, ok := r.v.(error); ok {
 		meta, _ := types.OperationMetaFrom(ctx)
-		rsp = status.AsResponse(err, meta.ServerMeta.UA())
+		er := status.AsResponse(err, meta.ServerMeta.UA())
+		// response options override the resolved fields
+		if r.title != "" {
+			er.SetTitle(r.title)
+		}
+		if r.detail != "" {
+			er.SetDetail(r.detail)
+		}
+		rsp = er
+		if r.media == "" {
+			r.media = status.MediaType
+		}
 	}
 
-	if x, ok := rsp.(status.Describer); ok {
-		r.SetStatusCode(x.StatusCode())
+	// the status set by options takes precedence
+	if r.status == 0 {
+		if x, ok := rsp.(status.Describer); ok {
+			r.SetStatusCode(x.StatusCode())
+		}
 	}
 
 	if r.status == 0 {
@@ -263,6 +287,8 @@ func (e errorResponse) Unwrap() error {
 
 type Modifier interface {
 	status.Modifier
+	status.TitleSetter
+	status.DetailSetter
 	redirect.Modifier
 	content.MediaTypeModifier
 	content.LengthModifier

@@ -6,121 +6,103 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/xoctopus/x/codex"
+
 	"github.com/xoctopus/httpx/internal/status"
 	"github.com/xoctopus/httpx/internal/validation"
-	"github.com/xoctopus/httpx/pkg/httpx"
 )
 
-func ExampleAsDescription() {
-	// error
-	e := status.WrapCode(errors.New("x"), http.StatusInternalServerError)
-	fmt.Println(e)
+func ExampleAsDetail() {
+	// domain code wraps a cause: code, key, title and detail come from the domain code
+	OutputDetail(status.AsDetail(codex.Wrapf(USER__NOT_FOUND, errors.New("sql: no rows"), "user %d not found", 9), "srv"))
 
-	// wrapped error
-	e = status.WrapCode(errors.New("e1"), http.StatusForbidden)
-	de := status.AsDescription(e, "server-name", "query")
-	fmt.Println(de)
+	// plain error with an explicit status: no identity layer
+	OutputDetail(status.AsDetail(status.WrapCode(errors.New("some error"), http.StatusServiceUnavailable), "srv"))
 
-	// user error
-	e = errors.New("e2")
-	de = status.AsDescription(e, "server-name", "query")
-	fmt.Println(de)
+	// plain error: 500
+	OutputDetail(status.AsDetail(errors.New("UnknownError"), "srv"))
 
-	// validation error
-	x := errors.New("e3")
-
-	e = validation.WrapLocationError(x, "query")
-	de = status.AsDescription(e, "server-name", "")
-	OutputDescription(de)
-
-	e = validation.WrapPositionError(x, "field")
-	de2 := status.AsDescription(e, "server-name", "")
-	OutputDescription(de2)
-
-	de3 := status.AsDescription(de2, "", "")
-	de3.Location = "body"
-	OutputDescription(de3)
+	// request located error: 400
+	OutputDetail(status.AsDetail(validation.PrefixPointer(validation.WrapPointer(errors.New("e3"), "/items/0/age"), "/body"), "srv"))
 
 	// Output:
-	// INTERNAL_SERVER_ERROR{message="x",status=500}
-	// FORBIDDEN{message="e1"}
-	// INTERNAL_SERVER_ERROR{message="e2"}
-	// BAD_REQUEST{message="e3"}
-	//   in:   query
-	//   code: 400
-	//   text: BAD_REQUEST
-	// BAD_REQUEST{message="e3"}
-	//   pos:  field
-	//   code: 400
-	//   text: BAD_REQUEST
-	// BAD_REQUEST{message="e3"}
-	//   in:   body
-	//   pos:  field
-	//   code: 400
-	//   text: BAD_REQUEST
+	// USER::NOT_FOUND{user 9 not found}
+	//   title:   用户不存在
+	//   code:    404
+	// SERVICE_UNAVAILABLE{SERVICE_UNAVAILABLE{message="some error",status=503}}
+	//   code:    503
+	// INTERNAL_SERVER_ERROR{UnknownError}
+	//   code:    500
+	// BAD_REQUEST{e3: [pointer:/body/items/0/age]}
+	//   pointer: /body/items/0/age
+	//   code:    400
 }
 
 func ExampleUnmarshalResponse() {
-	// unmarshal from response body
+	// RFC 9457 style problem details, sub problems are kept in errors
 	rspraw, _ := json.Marshal(status.Response{
-		Code: http.StatusUnauthorized,
-		Errors: []*status.Description{
-			{
-				Text:     "BAD_REQUEST",
-				Message:  "",
-				Location: "body",
-				Position: "username",
-				Source:   "srv-auth-gateway@v0.0.1",
-				Status:   httpx.STATUS__BAD_REQUEST,
-			},
-		},
-		Extra: map[string]any{
-			"title":  "用户名不合法",
-			"detail": "请输入8-16位, 以应为字母开头且仅包含英文字符和数字",
-		},
+		Key:    "AUTH__INVALID_USERNAME",
+		Code:   1,
+		Title:  "用户名不合法",
+		Detail: "请输入8-16位, 以应为字母开头且仅包含英文字符和数字",
+		Errors: []*status.Detail{{
+			Key:     "BAD_REQUEST",
+			Pointer: "/body/username",
+			Src:     "srv-auth-gateway@v0.0.1",
+			Status:  http.StatusBadRequest,
+		}},
 	})
-	de := status.UnmarshalResponse(http.StatusUnauthorized, rspraw)
-	OutputDescription(de)
+	de := status.UnmarshalResponse(http.StatusBadRequest, rspraw)
+	OutputDetail(de)
+	OutputDetail(de.Errors[0])
 
-	rspraw, _ = json.Marshal(status.Response{
-		Code:    http.StatusBadRequest,
-		Message: "用户名不合法\n请输入8-16位, 以应为字母开头且仅包含英文字符和数字",
-	})
-	de = status.UnmarshalResponse(http.StatusBadRequest, rspraw)
-	OutputDescription(de)
+	// compatible with {code, msg} and {message}
+	de = status.UnmarshalResponse(http.StatusUnauthorized, []byte(`{"code":2,"msg":"未登录"}`))
+	OutputDetail(de)
+	de = status.UnmarshalResponse(http.StatusUnauthorized, []byte(`{"message":"未登录"}`))
+	OutputDetail(de)
 
-	rspraw, _ = json.Marshal(status.Response{Code: http.StatusBadRequest})
-	de = status.UnmarshalResponse(http.StatusBadRequest, rspraw)
-	OutputDescription(de)
+	// empty body
+	de = status.UnmarshalResponse(http.StatusNotFound, []byte(`{}`))
+	OutputDetail(de)
+	de = status.UnmarshalResponse(http.StatusNotFound, nil)
+	OutputDetail(de)
 
+	// non JSON body
 	de = status.UnmarshalResponse(http.StatusBadRequest, []byte("用户名不合法"))
-	OutputDescription(de)
+	OutputDetail(de)
 
 	// Output:
-	// BAD_REQUEST{message="用户名不合法\n请输入8-16位, 以应为字母开头且仅包含英文字符和数字"}
-	//   in:   body
-	//   pos:  username
-	//   code: 401
-	//   text: UNAUTHORIZED
-	// BAD_REQUEST{message="用户名不合法\n请输入8-16位, 以应为字母开头且仅包含英文字符和数字"}
-	//   code: 400
-	//   text: BAD_REQUEST
-	// BAD_REQUEST{message="BAD_REQUEST"}
-	//   code: 400
-	//   text: BAD_REQUEST
-	// INTERNAL_SERVER_ERROR{message="用户名不合法"}
-	//   code: 500
-	//   text: INTERNAL_SERVER_ERROR
+	// AUTH__INVALID_USERNAME{请输入8-16位, 以应为字母开头且仅包含英文字符和数字}
+	//   title:   用户名不合法
+	//   code:    400
+	// BAD_REQUEST{}
+	//   pointer: /body/username
+	//   code:    0
+	// UNAUTHORIZED{未登录}
+	//   title:   未登录
+	//   code:    401
+	// UNAUTHORIZED{未登录}
+	//   title:   未登录
+	//   code:    401
+	// NOT_FOUND{Not Found}
+	//   title:   Not Found
+	//   code:    404
+	// NOT_FOUND{Not Found}
+	//   title:   Not Found
+	//   code:    404
+	// INTERNAL_SERVER_ERROR{用户名不合法}
+	//   title:   Internal Server Error
+	//   code:    500
 }
 
-func OutputDescription(de *status.Description) {
+func OutputDetail(de *status.Detail) {
 	fmt.Println(de)
-	if len(de.Location) > 0 {
-		fmt.Println("  in:  ", de.Location)
+	if len(de.Title) > 0 {
+		fmt.Println("  title:  ", de.Title)
 	}
-	if len(de.Position) > 0 {
-		fmt.Println("  pos: ", de.Position)
+	if len(de.Pointer) > 0 {
+		fmt.Println("  pointer:", de.Pointer)
 	}
-	fmt.Println("  code:", de.StatusCode())
-	fmt.Println("  text:", de.StatusText())
+	fmt.Println("  code:   ", de.StatusCode())
 }

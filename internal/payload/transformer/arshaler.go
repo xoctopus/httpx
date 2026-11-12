@@ -169,9 +169,9 @@ func (p *parameter) UnmarshalReaders(ctx context.Context, f *scanner.Field, read
 		}
 
 		if f.Multiple() {
-			return validation.WrapPositionError(err, fmt.Sprintf("%s.%d", f.FieldName, i))
+			return validation.PrefixPointer(err, jsontext.Pointer("").AppendToken(strconv.Itoa(i)))
 		}
-		return validation.WrapPositionError(err, f.FieldName)
+		return err
 	}
 	return nil
 }
@@ -364,7 +364,16 @@ func (p *parameter) UnmarshalRequest(r request.Request) error {
 			}
 
 			if err != nil {
-				return validation.WrapPositionError(validation.WrapLocationError(err, loc), f.Name)
+				// pointer in request document, see status.Detail
+				ptr := jsontext.Pointer("").AppendToken(loc)
+				switch loc {
+				case payload.BODY:
+				case payload.HEADER:
+					ptr = ptr.AppendToken(textproto.CanonicalMIMEHeaderKey(f.Name))
+				default:
+					ptr = ptr.AppendToken(f.Name)
+				}
+				return validation.PrefixPointer(err, ptr)
 			}
 		}
 	}

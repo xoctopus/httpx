@@ -1,148 +1,107 @@
 package status
 
 import (
+	"cmp"
+	"encoding/json/jsontext"
 	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 )
 
-func AsDescription(err error, src, loc string) *Description {
-	if x, ok := errors.AsType[*Description](err); ok {
+// AsDetail resolves err as a single problem: the status is the first declared
+// one from outside in, and code, key, title and detail come from the outermost
+// codex error (the identity layer) only. a downstream *Detail is returned as is.
+func AsDetail(err error, src string) *Detail {
+	if x, ok := errors.AsType[*Detail](err); ok {
 		return x
 	}
-
-	de := &Description{
-		Source:   src,
-		Location: loc,
+	_, entries := resolve(err, resolution{}, src)
+	if len(entries) > 0 {
+		return entries[0]
 	}
-
-	if x, ok := err.(interface{ Unwrap() error }); ok {
-		if e := x.Unwrap(); e != nil {
-			de.Message = e.Error()
-		}
-	}
-
-	if len(de.Message) == 0 {
-		de.Message = err.Error()
-	}
-
-	if x, ok := err.(Describer); ok {
-		de.Status = AsStatus(x.StatusCode())
-	}
-
-	if x, ok := err.(HasCodeText); ok {
-		de.Text = x.StatusText()
-	}
-
-	if x, ok := err.(HasLocation); ok {
-		if de.Status == nil || !de.Status.IsValid() {
-			de.Status = AsStatus(http.StatusBadRequest)
-		}
-		de.Location = x.Location()
-	}
-
-	if x, ok := err.(HasPosition); ok {
-		if de.Status == nil || !de.Status.IsValid() {
-			de.Status = AsStatus(http.StatusBadRequest)
-		}
-		de.Position = x.Position()
-	}
-
-	if de.Status == nil || !de.Status.IsValid() {
-		de.Status = AsStatus(http.StatusInternalServerError)
-	}
-
-	if de.Text == "" {
-		de.Text = de.Status.StatusText()
-	}
-
-	return de
+	return (&resolution{}).asDetail(err.Error(), src)
 }
 
-func UnmarshalResponse(code int, rspraw []byte) *Description {
-	d := &Description{
-		Status: AsStatus(code),
-	}
+// UnmarshalResponse parses an error body from a downstream service.
+// The body is expected to be a Response (RFC 9457 style problem details).
+// msg and message are compatible with the common {code, msg} style error body.
+// A non JSON body is kept in Detail and the status code turns to 500.
+func UnmarshalResponse(code int, rspraw []byte) *Detail {
+	d := &Detail{Status: code}
 
-	defer func() {
-		if len(d.Text) == 0 {
-			d.Text = d.StatusText()
-		}
-		if len(d.Message) == 0 {
-			d.Message = d.StatusText()
-		}
-	}()
-
-	rsp := &Response{}
-	if err := json.Unmarshal(rspraw, rsp); err != nil {
-		d.Message = string(rspraw)
-		d.Status = AsStatus(http.StatusInternalServerError)
-		return d
-	}
-
-	messages := make([]string, 0, 4)
-	switch len(rsp.Errors) {
-	case 0:
-		if len(rsp.Message) > 0 {
-			messages = append(messages, rsp.Message)
-		}
-	case 1:
-		d = rsp.Errors[0]
-		if d.Status == nil {
-			d.Status = AsStatus(code)
+	if len(rspraw) > 0 {
+		rsp := &struct {
+			Response `json:",inline"`
+			Msg      string `json:"msg,omitzero"`
+			Message  string `json:"message,omitzero"`
+		}{}
+		if err := json.Unmarshal(rspraw, rsp); err != nil {
+			d.Status = http.StatusInternalServerError
+			d.Detail = string(rspraw)
+		} else {
+			d.Code = rsp.Code
+			d.Key = rsp.Key
+			d.Title = cmp.Or(rsp.Title, rsp.Msg, rsp.Message)
+			d.Detail = rsp.Detail
+			d.Errors = rsp.Errors
 		}
 	}
 
-	// must be ordered: rsp.Message .. extra.title .. extra.detail
-	if rsp.Extra != nil {
-		if x, ok := rsp.Extra["title"].(string); ok && len(x) > 0 {
-			messages = append(messages, x)
-		}
-		if x, ok := rsp.Extra["detail"].(string); ok && len(x) > 0 {
-			messages = append(messages, x)
-		}
-	}
-	if len(messages) > 0 {
-		d.Message = strings.Join(messages, "\n")
-	}
+	d.Key = cmp.Or(d.Key, d.StatusText())
+	d.Title = cmp.Or(d.Title, http.StatusText(d.Status))
 	return d
 }
 
-type Description struct {
-	// Text error code text
-	Text string `json:"code,omitzero"`
-	// Message error message
-	Message string `json:"message,omitzero"`
-	// Detail error detail
+// Detail is an item of problem details. json fields follow RFC 9457 where the
+// semantics match; the others are extension members.
+type Detail struct {
+	// Code biz error code
+	Code int64 `json:"code,omitzero"`
+	// Key code identifier
+	Key string `json:"key,omitzero"`
+	// Title code hint, the same for every occurrence of the problem
+	Title string `json:"title,omitzero"`
+	// Detail explanation of this occurrence, for client not for debugging
 	Detail string `json:"detail,omitzero"`
-	// Location error location, see payload.Locations
-	Location string `json:"location,omitzero"`
-	// Position pointer to field positon. eg: Type.Field
-	Position string `json:"position,omitzero"`
-	// Source error caused source. eg: srv-abc@v1.1.0
-	Source string `json:"source,omitzero"`
-	// Errors error chain
-	Errors []*Description `json:"errors,omitzero"`
+	// Pointer JSON Pointer (RFC 6901) to the error position in the request
+	// document. the document roots are payload.Locations, eg: `/body/items/0/age`,
+	// `/query/ids/1`, `/header/X-Request-Id`. the pointer of a downstream Detail
+	// is relative to the downstream request.
+	Pointer jsontext.Pointer `json:"pointer,omitzero"`
+	// Src caused source. eg: srv-abc@v0.0.1
+	Src string `json:"src,omitzero"`
+	// Desc the full text of the error, for logging only, never presented
+	Desc string `json:"-"`
+	// Errors sub problems from downstream
+	Errors []*Detail `json:"errors,omitzero"`
 
-	Status Status `json:"-"`
+	// Status http status code, 0 means unspecified (eg: downstream sub problems)
+	Status int `json:"-"`
 }
 
-func (d *Description) StatusCode() int {
-	return d.Status.StatusCode()
+func (d *Detail) StatusCode() int {
+	return d.Status
 }
 
-func (d *Description) StatusText() string {
-	return d.Status.StatusText()
+func (d *Detail) StatusText() string {
+	return AsStatus(d.Status).StatusText()
 }
 
-func (d *Description) Error() string {
-	return fmt.Sprintf("%s{message=%q}", d.Text, d.Message)
+func (d *Detail) SetDetail(detail string) {
+	d.Detail = detail
 }
 
-func (d *Description) UnmarshalResponse(code int, data []byte) error {
-	x := UnmarshalResponse(code, data)
-	*d = *x
+// Error is for logging: the key, or the status text when there is no key, with
+// the first of detail, title and desc.
+func (d *Detail) Error() string {
+	return fmt.Sprintf("%s{%s}", cmp.Or(d.Key, d.StatusText()), cmp.Or(d.Detail, d.Title, d.Desc))
+}
+
+// UnmarshalResponse keeps Src if it is set by caller, eg: downstream host.
+func (d *Detail) UnmarshalResponse(code int, data []byte) error {
+	src := d.Src
+	*d = *UnmarshalResponse(code, data)
+	d.Src = cmp.Or(d.Src, src)
 	return nil
 }

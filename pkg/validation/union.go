@@ -75,7 +75,8 @@ func UnmarshalDecodeUnion(dec *jsontext.Decoder, ut UnionType) error {
 
 		if v, ok := ut.Mapping()[discriminatorValue]; ok {
 			if err := UnmarshalDecode(jsontext.NewDecoder(buf), v); err != nil {
-				return validation.WrapPositionError(err, dec.StackPointer())
+				// v is decoded from buf, its positions are relative to the union value
+				return validation.PrefixPointer(err, dec.StackPointer())
 			}
 			ut.SetUnderlying(v)
 			return nil
@@ -86,9 +87,9 @@ func UnmarshalDecodeUnion(dec *jsontext.Decoder, ut UnionType) error {
 			return nil
 		}
 
-		return validation.WrapPositionError(
+		return validation.WrapPointer(
 			fmt.Errorf("unsupported %s=%s", ut.Discriminator(), discriminatorValue),
-			jsontext.Pointer(fmt.Sprintf("/%s", ut.Discriminator())),
+			dec.StackPointer().AppendToken(ut.Discriminator()),
 		)
 	default:
 		return &json.SemanticError{Err: errors.New("expect object or null")}
