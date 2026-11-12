@@ -132,16 +132,15 @@ func (m *mux) add(r *http.ServeMux, h route.Handler) {
 	})
 
 	ua := info.UA()
-	injections := []contextx.Carrier{
-		types.CarryOperationMeta(info),
-		types.CarryOperationMetaProvider(m.operations),
-	}
 
 	r.HandleFunc(
 		method+" "+path.Prefix(segments),
 		func(rw http.ResponseWriter, req *http.Request) {
-			injections = append(injections, path.CarryParamGetter(req))
-			ctx := contextx.Compose(injections...)(req.Context())
+			ctx := contextx.Compose(
+				types.CarryOperationMeta(info),
+				types.CarryOperationMetaProvider(m.operations),
+				path.CarryParamGetter(req),
+			)(req.Context())
 			rw.Header().Set("Server", ua)
 			h.ServeHTTP(rw, req.WithContext(ctx))
 		},
