@@ -1,6 +1,24 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/httpx/compare/v1.0.0-rc2...HEAD) (0001-01-01)
+## [HEAD](https://github.com/xoctopus/httpx/compare/v1.0.0-rc2...HEAD) (2026-11-13)
+
+### Docs
+
+* **openspec:** archive split-error-location
+* **openspec:** add normalize-validation-codes plan
+
+### Feat
+
+* **status:** split error pointer into location and pointer
+
+### BREAKING CHANGE
+
+
+the meaning of the `pointer` member changed. It used to carry
+the location prefix (`/body/password`); it is now relative to `location`
+(`"location": "body", "pointer": "/password"`). The member name is unchanged, so
+readers of v1.0.0-rc1 / rc2 responses get a path without its first segment.
+Migration: old pointer = "/" + location + pointer.
 
 
 <a name="v1.0.0-rc2"></a>
