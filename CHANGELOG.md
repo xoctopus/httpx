@@ -1,6 +1,14 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/httpx/compare/v1.0.0-rc1...HEAD) (0001-01-01)
+## [HEAD](https://github.com/xoctopus/httpx/compare/v1.0.0-rc2...HEAD) (0001-01-01)
+
+
+<a name="v1.0.0-rc2"></a>
+## [v1.0.0-rc2](https://github.com/xoctopus/httpx/compare/v1.0.0-rc1...v1.0.0-rc2) (2026-11-13)
+
+### Chore
+
+* **deps:** switch logx to x/logx and bump confx
 
 
 <a name="v1.0.0-rc1"></a>

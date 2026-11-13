@@ -13,7 +13,7 @@ import (
 
 func TestResponse(t *testing.T) {
 	bdd.From(t).Given("a request located error", func(t bdd.T) {
-		err := validation.PrefixPointer(validation.WrapPointer(errors.New("0"), "/name"), "/body")
+		err := validation.WrapLocation(validation.WrapPointer(errors.New("0"), "/name"), "body")
 		r := status.AsResponse(err, "srv")
 
 		t.When("resolved", func(t bdd.T) {
@@ -21,7 +21,8 @@ func TestResponse(t *testing.T) {
 			t.Then("status text", bdd.Equal(r.StatusText(), http.StatusText(http.StatusBadRequest)))
 			t.Then("no identity layer", bdd.Equal(r.Key, ""))
 			t.Then("one entry", bdd.HaveLen(r.Errors, 1))
-			t.Then("entry pointer", bdd.Equal(string(r.Errors[0].Pointer), "/body/name"))
+			t.Then("entry location", bdd.Equal(r.Errors[0].Location, "body"))
+			t.Then("entry pointer", bdd.Equal(string(r.Errors[0].Pointer), "/name"))
 			t.Then("cause not in detail", bdd.Equal(r.Errors[0].Detail, ""))
 			t.Then("unwrap entries", bdd.HaveLen(r.Unwrap(), 1))
 		})

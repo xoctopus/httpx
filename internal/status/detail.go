@@ -64,10 +64,14 @@ type Detail struct {
 	Title string `json:"title,omitzero"`
 	// Detail explanation of this occurrence, for client not for debugging
 	Detail string `json:"detail,omitzero"`
-	// Pointer JSON Pointer (RFC 6901) to the error position in the request
-	// document. the document roots are payload.Locations, eg: `/body/items/0/age`,
-	// `/query/ids/1`, `/header/X-Request-Id`. the pointer of a downstream Detail
-	// is relative to the downstream request.
+	// Location the request location of the error, one of payload.Locations:
+	// header, path, query, cookie and body. the location of a downstream
+	// Detail is relative to the downstream request.
+	Location string `json:"location,omitzero"`
+	// Pointer JSON Pointer (RFC 6901) to the error position relative to the root
+	// of Location, eg: `/items/0/age` in body, `/ids/1` in query. it does not
+	// carry the location, and is omitted when the error is only located to the
+	// whole location.
 	Pointer jsontext.Pointer `json:"pointer,omitzero"`
 	// Src caused source. eg: srv-abc@v0.0.1
 	Src string `json:"src,omitzero"`

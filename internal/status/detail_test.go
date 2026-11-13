@@ -23,7 +23,7 @@ func ExampleAsDetail() {
 	OutputDetail(status.AsDetail(errors.New("UnknownError"), "srv"))
 
 	// request located error: 400
-	OutputDetail(status.AsDetail(validation.PrefixPointer(validation.WrapPointer(errors.New("e3"), "/items/0/age"), "/body"), "srv"))
+	OutputDetail(status.AsDetail(validation.WrapLocation(validation.WrapPointer(errors.New("e3"), "/items/0/age"), "body"), "srv"))
 
 	// Output:
 	// USER::NOT_FOUND{user 9 not found}
@@ -33,8 +33,9 @@ func ExampleAsDetail() {
 	//   code:    503
 	// INTERNAL_SERVER_ERROR{UnknownError}
 	//   code:    500
-	// BAD_REQUEST{e3: [pointer:/body/items/0/age]}
-	//   pointer: /body/items/0/age
+	// BAD_REQUEST{e3: [pointer:/items/0/age]}
+	//   location: body
+	//   pointer: /items/0/age
 	//   code:    400
 }
 
@@ -46,10 +47,11 @@ func ExampleUnmarshalResponse() {
 		Title:  "用户名不合法",
 		Detail: "请输入8-16位, 以应为字母开头且仅包含英文字符和数字",
 		Errors: []*status.Detail{{
-			Key:     "BAD_REQUEST",
-			Pointer: "/body/username",
-			Src:     "srv-auth-gateway@v0.0.1",
-			Status:  http.StatusBadRequest,
+			Key:      "BAD_REQUEST",
+			Location: "body",
+			Pointer:  "/username",
+			Src:      "srv-auth-gateway@v0.0.1",
+			Status:   http.StatusBadRequest,
 		}},
 	})
 	de := status.UnmarshalResponse(http.StatusBadRequest, rspraw)
@@ -77,7 +79,8 @@ func ExampleUnmarshalResponse() {
 	//   title:   用户名不合法
 	//   code:    400
 	// BAD_REQUEST{}
-	//   pointer: /body/username
+	//   location: body
+	//   pointer: /username
 	//   code:    0
 	// UNAUTHORIZED{未登录}
 	//   title:   未登录
@@ -100,6 +103,9 @@ func OutputDetail(de *status.Detail) {
 	fmt.Println(de)
 	if len(de.Title) > 0 {
 		fmt.Println("  title:  ", de.Title)
+	}
+	if len(de.Location) > 0 {
+		fmt.Println("  location:", de.Location)
 	}
 	if len(de.Pointer) > 0 {
 		fmt.Println("  pointer:", de.Pointer)

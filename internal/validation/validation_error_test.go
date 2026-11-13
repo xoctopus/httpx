@@ -58,3 +58,50 @@ func TestPointer(t *testing.T) {
 		Expect(t, PrefixPointer(nil, "/a"), BeNil[error]())
 	})
 }
+
+// TestLocation covers spec: 错误位置
+func TestLocation(t *testing.T) {
+	position := func(err error) (string, jsontext.Pointer, bool) {
+		x, ok := errors.AsType[*PointerError](err)
+		if !ok {
+			return "", "", false
+		}
+		return x.Location(), x.Pointer(), true
+	}
+
+	t.Run("WithoutPosition", func(t *testing.T) {
+		loc, pos, ok := position(WrapLocation(errors.New("x"), "body"))
+		Expect(t, ok, BeTrue())
+		Expect(t, loc, Equal("body"))
+		Expect(t, pos, Equal[jsontext.Pointer](""))
+	})
+	t.Run("WithPointer", func(t *testing.T) {
+		loc, pos, ok := position(WrapLocation(WrapPointer(errors.New("x"), "/a"), "query"))
+		Expect(t, ok, BeTrue())
+		Expect(t, loc, Equal("query"))
+		Expect(t, pos, Equal[jsontext.Pointer]("/a"))
+	})
+	t.Run("ThroughWrappers", func(t *testing.T) {
+		inner := WrapPointer(errors.New("x"), "/a")
+		loc, _, ok := position(WrapLocation(fmt.Errorf("wrap: %w", inner), "body"))
+		Expect(t, ok, BeTrue())
+		Expect(t, loc, Equal("body"))
+	})
+	t.Run("KeepsExisting", func(t *testing.T) {
+		loc, _, ok := position(WrapLocation(WrapLocation(errors.New("x"), "header"), "body"))
+		Expect(t, ok, BeTrue())
+		Expect(t, loc, Equal("header"))
+	})
+	t.Run("JoinedBranches", func(t *testing.T) {
+		a, b := WrapPointer(errors.New("a"), "/a"), WrapPointer(errors.New("b"), "/b")
+		_ = WrapLocation(errors.Join(a, b), "body")
+		la, _, oka := position(a)
+		lb, _, okb := position(b)
+		Expect(t, oka && okb, BeTrue())
+		Expect(t, la, Equal("body"))
+		Expect(t, lb, Equal("body"))
+	})
+	t.Run("Nil", func(t *testing.T) {
+		Expect(t, WrapLocation(nil, "body"), BeNil[error]())
+	})
+}

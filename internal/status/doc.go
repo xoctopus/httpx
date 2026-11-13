@@ -12,7 +12,8 @@
 //   - status: the first node declaring a status code (> 0), such as
 //     [Wrap]/[WrapCode] or a codex code declaring `@code api`. nodes declaring
 //     nothing are skipped. without any declaration it is 400 for errors located
-//     in the request ([HasPointer]), otherwise 500.
+//     in a request location ([HasLocation]), otherwise 500. a declaration always
+//     wins over this fallback.
 //   - identity layer: the outermost codex.Error. code, key, title and detail
 //     come from it only: code is codex.Error.Code, key is the code identifier,
 //     title is the code hint and detail is codex.Error.Detail (the format and
@@ -23,6 +24,15 @@
 // status above the Join and resolve their own identity layer. The top level of
 // [Response] takes the identity layer above the Join if any, otherwise the
 // first entry. A downstream [*Detail] in the chain is kept as an entry as is.
+//
+// # Position
+//
+// An error located in a request carries Location and Pointer in its entry of
+// Errors: [HasLocation] gives the request location (one of payload.Locations)
+// and [HasPointer] gives a JSON Pointer relative to the root of that location.
+// Pointer is omitted when the error is only located to the whole location, and both
+// are omitted for errors that do not come from parsing a request. The top level
+// of [Response] never carries them.
 //
 // # Exposure
 //

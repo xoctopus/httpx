@@ -364,16 +364,17 @@ func (p *parameter) UnmarshalRequest(r request.Request) error {
 			}
 
 			if err != nil {
-				// pointer in request document, see status.Detail
-				ptr := jsontext.Pointer("").AppendToken(loc)
+				// the position is a JSON Pointer relative to the root of loc:
+				// the root of body is the whole body, the root of the others is
+				// the parameters of loc, see status.Detail
 				switch loc {
 				case payload.BODY:
 				case payload.HEADER:
-					ptr = ptr.AppendToken(textproto.CanonicalMIMEHeaderKey(f.Name))
+					err = validation.PrefixPointer(err, jsontext.Pointer("").AppendToken(textproto.CanonicalMIMEHeaderKey(f.Name)))
 				default:
-					ptr = ptr.AppendToken(f.Name)
+					err = validation.PrefixPointer(err, jsontext.Pointer("").AppendToken(f.Name))
 				}
-				return validation.PrefixPointer(err, ptr)
+				return validation.WrapLocation(err, loc)
 			}
 		}
 	}

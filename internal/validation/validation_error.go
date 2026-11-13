@@ -37,7 +37,7 @@ func WrapPointer(err error, p jsontext.Pointer) error {
 
 // PrefixPointer prepends prefix to the pointers in err. It is used when err
 // comes from a nested document whose root is located by prefix in the outer
-// document, eg: a request body is located by `/body` in the request.
+// document, eg: a field of a multipart body is located by `/<name>` in the body.
 func PrefixPointer(err error, prefix jsontext.Pointer) error {
 	if err == nil || prefix == "" {
 		return err
@@ -69,10 +69,48 @@ func prefixPointer(err error, prefix jsontext.Pointer) bool {
 	return false
 }
 
-// PointerError locates err by a JSON Pointer (RFC 6901) in the request document.
+// WrapLocation attaches the request location (one of payload.Locations) to err,
+// so that the pointers in err are read as relative to the root of that location.
+// an existing location is kept since it is the innermost and the most precise one.
+func WrapLocation(err error, location string) error {
+	if err == nil {
+		return nil
+	}
+	if setLocation(err, location) {
+		return err
+	}
+	return &PointerError{err: err, location: location}
+}
+
+func setLocation(err error, location string) bool {
+	switch x := err.(type) {
+	case *PointerError:
+		if x.location == "" {
+			x.location = location
+		}
+		return true
+	case interface{ Unwrap() error }:
+		if e := x.Unwrap(); e != nil {
+			return setLocation(e, location)
+		}
+	case interface{ Unwrap() []error }:
+		located := false
+		for _, e := range x.Unwrap() {
+			if e != nil && setLocation(e, location) {
+				located = true
+			}
+		}
+		return located
+	}
+	return false
+}
+
+// PointerError locates err in a request: location is one of payload.Locations
+// and ptr is a JSON Pointer (RFC 6901) relative to the root of the location.
 type PointerError struct {
-	err error
-	ptr jsontext.Pointer
+	err      error
+	location string
+	ptr      jsontext.Pointer
 }
 
 func (e *PointerError) Error() string {
@@ -85,4 +123,9 @@ func (e *PointerError) Unwrap() error {
 
 func (e *PointerError) Pointer() jsontext.Pointer {
 	return e.ptr
+}
+
+// Location returns the request location of err, empty if unknown.
+func (e *PointerError) Location() string {
+	return e.location
 }

@@ -31,7 +31,8 @@ import (
 	"github.com/xoctopus/httpx/pkg/routex"
 )
 
-// Acceptance tests of the response-model spec (openspec/changes/define-response-model),
+// Acceptance tests of the response-model spec (openspec/changes/define-response-model,
+// openspec/changes/split-error-location: scenarios #1 - #8 of its scenarios.md),
 // driven through the example service: requests are sent by confhttp.Client and
 // responses are decoded by Result.Into, as a downstream service would do.
 //
@@ -192,6 +193,10 @@ func (r *result) ExpectProblem(t bdd.T, p problem) {
 	for _, f := range []string{"type", "status", "instance", "src", "desc"} {
 		t.Then("body: top level has no "+f, bdd.BeFalse(has(r.Body, f)))
 	}
+	// spec: 错误位置 / 非解析错误没有位置, 没有 pointer
+	for _, f := range []string{"location", "pointer"} {
+		t.Then("body: has no "+f, bdd.BeFalse(bytes.Contains(r.Raw, []byte(`"`+f+`"`))))
+	}
 
 	// decoded by Result.Into
 	d, ok := errors.AsType[*status.Detail](r.Err)
@@ -214,19 +219,42 @@ func (r *result) ExpectProblem(t bdd.T, p problem) {
 	}
 }
 
-// ExpectInvalid checks a request parameter error, spec: 错误的统一出口 / 参数校验失败.
-// error position (loc / pos) is not covered in this change.
-func (r *result) ExpectInvalid(t bdd.T) {
+// ExpectInvalid checks a request parameter error located at location and pointer,
+// spec: 错误的统一出口 / 参数校验失败; 错误位置. pointer is relative to location,
+// an empty pointer means the error is only located to the whole location, so
+// `pointer` MUST be absent.
+func (r *result) ExpectInvalid(t bdd.T, location, pointer string) {
 	t.Then("status 400", bdd.Equal(r.Status, http.StatusBadRequest))
 	t.Then("problem media type", bdd.Equal(r.Header.Get("Content-Type"), "application/problem+json"))
-	for _, f := range []string{"type", "status", "instance", "src", "desc"} {
+	for _, f := range []string{"type", "status", "instance", "src", "desc", "location", "pointer"} {
 		t.Then("body: top level has no "+f, bdd.BeFalse(has(r.Body, f)))
 	}
 
+	// raw entry
+	entries, _ := r.Body["errors"].([]any)
+	t.Then("body: has an error entry", bdd.BeTrue(len(entries) > 0))
+	if len(entries) > 0 {
+		entry, _ := entries[0].(map[string]any)
+		t.Then("body: entry location", bdd.Equal(str(entry, "location"), location))
+		if pointer == "" {
+			t.Then("body: entry has no pointer", bdd.BeFalse(has(entry, "pointer")))
+		} else {
+			// spec: 错误位置 / pointer 不带 location 前缀
+			t.Then("body: entry pointer", bdd.Equal(str(entry, "pointer"), pointer))
+		}
+	}
+
+	// decoded by Result.Into, spec: 错误位置 / 下游错误位置被保留
 	d, ok := errors.AsType[*status.Detail](r.Err)
 	t.Then("decoded as *status.Detail", bdd.BeTrue(ok))
-	if ok {
-		t.Then("decoded: status code", bdd.Equal(d.StatusCode(), http.StatusBadRequest))
+	if !ok {
+		return
+	}
+	t.Then("decoded: status code", bdd.Equal(d.StatusCode(), http.StatusBadRequest))
+	t.Then("decoded: has an error entry", bdd.BeTrue(len(d.Errors) > 0))
+	if len(d.Errors) > 0 {
+		t.Then("decoded: entry location", bdd.Equal(d.Errors[0].Location, location))
+		t.Then("decoded: entry pointer", bdd.Equal(string(d.Errors[0].Pointer), pointer))
 	}
 }
 
@@ -305,10 +333,27 @@ func TestLoginByUsername(t *testing.T) {
 		})
 	})
 
+	bdd.From(t).Given("password is absent", func(t bdd.T) {
+		t.When("PUT /login", func(t bdd.T) {
+			r := call(root, raw(http.MethodPut, "/login", "application/json", `{"username":"1"}`), nil)
+			// spec: 错误位置 / 缺少必填的 body 字段
+			r.ExpectInvalid(t, "body", "/password")
+		})
+	})
+
+	bdd.From(t).Given("username has a wrong type and password is absent", func(t bdd.T) {
+		t.When("PUT /login", func(t bdd.T) {
+			r := call(root, raw(http.MethodPut, "/login", "application/json", `{"username":1}`), nil)
+			// spec: 校验的失败顺序 / 同一 body 内的多个错误
+			r.ExpectInvalid(t, "body", "/username")
+		})
+	})
+
 	bdd.From(t).Given("body is not valid json", func(t bdd.T) {
 		t.When("PUT /login", func(t bdd.T) {
 			r := call(root, raw(http.MethodPut, "/login", "application/json", `{"username":`), nil)
-			r.ExpectInvalid(t)
+			// spec: 错误位置 / 请求体不是合法 JSON
+			r.ExpectInvalid(t, "body", "")
 		})
 	})
 }
@@ -403,12 +448,14 @@ func TestListUsers(t *testing.T) {
 		t.When("required memberType is absent", func(t bdd.T) {
 			req := raw(http.MethodGet, "/user", "", "")
 			req.Header.Set("Authorization", "Bearer "+token("1"))
-			call(users, req, nil).ExpectInvalid(t)
+			// spec: 错误位置 / 缺少必填的 query 参数
+			call(users, req, nil).ExpectInvalid(t, "query", "/memberType")
 		})
 		t.When("createdAt is not a time", func(t bdd.T) {
 			req := raw(http.MethodGet, "/user?memberType=x&createdAt=yesterday", "", "")
 			req.Header.Set("Authorization", "Bearer "+token("1"))
-			call(users, req, nil).ExpectInvalid(t)
+			// spec: 错误位置 / 缺少必填的 query 参数 (类型错误)
+			call(users, req, nil).ExpectInvalid(t, "query", "/createdAt")
 		})
 	})
 }
@@ -487,7 +534,8 @@ func TestDeleteUserByUserID(t *testing.T) {
 		t.When("userID is not an integer", func(t bdd.T) {
 			req := raw(http.MethodDelete, "/user/abc", "", "")
 			req.Header.Set("Authorization", "Bearer "+token("0"))
-			call(users, req, nil).ExpectInvalid(t)
+			// spec: 错误位置 / 路径参数
+			call(users, req, nil).ExpectInvalid(t, "path", "/userID")
 		})
 	})
 }

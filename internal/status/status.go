@@ -2,6 +2,7 @@ package status
 
 import (
 	"encoding/json/jsontext"
+	"errors"
 	"net/http"
 
 	"github.com/xoctopus/x/codex"
@@ -36,10 +37,16 @@ type TitleSetter interface {
 	SetTitle(title string)
 }
 
-// HasPointer presents error position by a JSON Pointer (RFC 6901) in the
-// request document, see Detail.Pointer
+// HasPointer presents error position by a JSON Pointer (RFC 6901) relative to
+// the root of the request location, see Detail.Pointer
 type HasPointer interface {
 	Pointer() jsontext.Pointer
+}
+
+// HasLocation presents the request location of an error, one of
+// payload.Locations, see Detail.Location
+type HasLocation interface {
+	Location() string
 }
 
 type HasCodeText interface {
@@ -63,7 +70,8 @@ type resolution struct {
 	title  string
 	detail string
 
-	pointer jsontext.Pointer
+	location string
+	pointer  jsontext.Pointer
 }
 
 func (r *resolution) visit(err error) {
@@ -73,7 +81,7 @@ func (r *resolution) visit(err error) {
 		}
 	}
 
-	if x, ok := err.(codex.Error); ok {
+	if x, ok := errors.AsType[codex.Error](err); ok {
 		if r.status <= 0 {
 			var d Describer
 			if x.As(&d) {
@@ -95,6 +103,11 @@ func (r *resolution) visit(err error) {
 		}
 	}
 
+	if r.location == "" {
+		if x, ok := err.(HasLocation); ok {
+			r.location = x.Location()
+		}
+	}
 	if len(r.pointer) == 0 {
 		if x, ok := err.(HasPointer); ok {
 			r.pointer = x.Pointer()
@@ -102,13 +115,13 @@ func (r *resolution) visit(err error) {
 	}
 }
 
-// statusCode returns the resolved status, 400 for errors located in the
-// request, otherwise 500.
+// statusCode returns the declared status. without a declaration it is 400 for
+// errors located in a request location, otherwise 500.
 func (r *resolution) statusCode() int {
 	switch {
 	case r.status > 0:
 		return r.status
-	case len(r.pointer) > 0:
+	case r.location != "":
 		return http.StatusBadRequest
 	default:
 		return http.StatusInternalServerError
@@ -117,14 +130,15 @@ func (r *resolution) statusCode() int {
 
 func (r *resolution) asDetail(desc, src string) *Detail {
 	return &Detail{
-		Code:    r.code,
-		Key:     r.key,
-		Title:   r.title,
-		Detail:  r.detail,
-		Pointer: r.pointer,
-		Src:     src,
-		Desc:    desc,
-		Status:  r.statusCode(),
+		Code:     r.code,
+		Key:      r.key,
+		Title:    r.title,
+		Detail:   r.detail,
+		Location: r.location,
+		Pointer:  r.pointer,
+		Src:      src,
+		Desc:     desc,
+		Status:   r.statusCode(),
 	}
 }
 
@@ -135,7 +149,7 @@ func (r *resolution) asDetail(desc, src string) *Detail {
 func resolve(err error, r resolution, src string) (resolution, []*Detail) {
 	desc := err.Error()
 	for e := err; e != nil; {
-		if d, ok := e.(*Detail); ok {
+		if d, ok := errors.AsType[*Detail](e); ok {
 			return r, []*Detail{d}
 		}
 		r.visit(e)
@@ -145,7 +159,7 @@ func resolve(err error, r resolution, src string) (resolution, []*Detail) {
 			var entries []*Detail
 			for _, branch := range x.Unwrap() {
 				if branch != nil {
-					_, ds := resolve(branch, resolution{status: r.status, pointer: r.pointer}, src)
+					_, ds := resolve(branch, resolution{status: r.status, location: r.location, pointer: r.pointer}, src)
 					entries = append(entries, ds...)
 				}
 			}
