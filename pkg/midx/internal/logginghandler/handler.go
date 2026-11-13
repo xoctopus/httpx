@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/xoctopus/logx"
+	"github.com/xoctopus/x/logx"
 )
 
 type ResponseWriter interface {

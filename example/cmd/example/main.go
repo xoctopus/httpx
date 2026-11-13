@@ -6,8 +6,8 @@ import (
 
 	"github.com/xoctopus/confx/pkg/confjwt"
 	"github.com/xoctopus/confx/pkg/types"
-	"github.com/xoctopus/logx"
 	"github.com/xoctopus/x/contextx"
+	"github.com/xoctopus/x/logx"
 
 	"github.com/xoctopus/httpx/example/cmd/example/apis"
 	"github.com/xoctopus/httpx/pkg/confhttp"

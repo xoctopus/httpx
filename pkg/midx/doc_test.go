@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/xoctopus/logx"
 	"github.com/xoctopus/x/contextx"
+	"github.com/xoctopus/x/logx"
 
 	"github.com/xoctopus/httpx/internal/testutil"
 	"github.com/xoctopus/httpx/pkg/httpx"

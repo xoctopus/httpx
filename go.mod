@@ -12,14 +12,13 @@ require (
 	github.com/fatih/color v1.19.0
 	github.com/felixge/httpsnoop v1.1.0
 	github.com/prometheus/client_golang v1.25.0
-	github.com/xoctopus/confx v0.6.3-rc1
+	github.com/xoctopus/confx v0.6.3-rc3
 	// +skill:genx
 	github.com/xoctopus/genx v0.4.2
-	// +skill:logx
-	github.com/xoctopus/logx v0.4.0
 	github.com/xoctopus/sqlx v0.4.4
+	// +skill:logx
 	// +skill:testx
-	github.com/xoctopus/x v0.6.1
+	github.com/xoctopus/x v0.6.2
 	go.opentelemetry.io/contrib/propagators/b3 v1.47.0
 	go.opentelemetry.io/otel v1.47.0
 	go.opentelemetry.io/otel/metric v1.47.0

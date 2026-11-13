@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xoctopus/logx"
+	"github.com/xoctopus/x/logx"
 	"go.opentelemetry.io/contrib/propagators/b3"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"

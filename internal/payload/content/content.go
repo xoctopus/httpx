@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/xoctopus/logx"
+	"github.com/xoctopus/x/logx"
 	"golang.org/x/sync/errgroup"
 )
 

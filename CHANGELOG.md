@@ -1,6 +1,10 @@
 
 <a name="HEAD"></a>
-## [HEAD](https://github.com/xoctopus/httpx/compare/v0.0.2...HEAD) (2026-11-12)
+## [HEAD](https://github.com/xoctopus/httpx/compare/v1.0.0-rc1...HEAD) (0001-01-01)
+
+
+<a name="v1.0.0-rc1"></a>
+## [v1.0.0-rc1](https://github.com/xoctopus/httpx/compare/v0.0.2...v1.0.0-rc1) (2026-11-13)
 
 ### Chore
 
@@ -16,6 +20,7 @@
 ### Docs
 
 * **method:** document HTTP verb capability package
+* **openspec:** archive define-response-model and add response-model spec
 * **openspec:** add define-response-model change
 * **operator:** document pipeline model and export capabilities
 
@@ -26,6 +31,7 @@
 
 ### Fix
 
+* **chglog:** accept breaking change marker in commit header
 * **routex:** build context injections per request
 
 ### Refactor

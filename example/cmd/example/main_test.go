@@ -15,8 +15,8 @@ import (
 
 	"github.com/xoctopus/confx/pkg/confjwt"
 	"github.com/xoctopus/confx/pkg/types"
-	"github.com/xoctopus/logx"
 	"github.com/xoctopus/x/contextx"
+	"github.com/xoctopus/x/logx"
 	"github.com/xoctopus/x/misc/must"
 	"github.com/xoctopus/x/testx/bdd"
 
@@ -244,6 +244,9 @@ var (
 	// UserPermission returns ErrorResponse(fmt.Errorf("PermissionDenied"), WithResponseStatusCode(403),
 	// WithResponseTitle("无权操作"), WithResponseDetail(...)) as its value
 	permissionDenied = problem{Status: 403, Title: "无权操作", Detail: "需要管理员权限操作[]"}
+	// confjwt.Auth returns CONFJWT::TOKEN_VALIDATION (401) for empty / invalid Bearer
+	tokenEmpty   = problem{Status: 401, Code: 1, Key: "CONFJWT::TOKEN_VALIDATION", Detail: "got empty token"}
+	tokenInvalid = problem{Status: 401, Code: 1, Key: "CONFJWT::TOKEN_VALIDATION", Detail: "failed parsing"}
 )
 
 func TestHealthCheck(t *testing.T) {
@@ -354,16 +357,17 @@ func TestAuth(t *testing.T) {
 	bdd.From(t).Given("authorization is absent", func(t bdd.T) {
 		t.When("GET /user", func(t bdd.T) {
 			r := call(users, list, &muser.ListResult{})
-			// spec: 错误的统一出口 / 前置 operator 返回错误; 标识层 / 没有标识层
-			r.ExpectProblem(t, problem{Status: 401})
-			r.ExpectNotLeaked(t, "invalid token")
+			// spec: 错误的统一出口 / 前置 operator 返回错误; 标识层 / confjwt TOKEN_VALIDATION
+			r.ExpectProblem(t, tokenEmpty)
 		})
 	})
 
 	bdd.From(t).Given("token is invalid", func(t bdd.T) {
 		t.When("GET /user", func(t bdd.T) {
 			r := call(users, list, &muser.ListResult{}, httpx.Metadata{"Authorization": {"Bearer x"}})
-			r.ExpectProblem(t, problem{Status: 401})
+			r.ExpectProblem(t, tokenInvalid)
+			// jwt library cause stays in Desc, not in problem body
+			r.ExpectNotLeaked(t, "token is malformed")
 		})
 	})
 

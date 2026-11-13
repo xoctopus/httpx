@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/xoctopus/logx"
+	"github.com/xoctopus/x/logx"
 
 	"github.com/xoctopus/httpx/internal/client"
 	"github.com/xoctopus/httpx/internal/payload/content"

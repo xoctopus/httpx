@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/xoctopus/logx"
+	"github.com/xoctopus/x/logx"
 
 	"github.com/xoctopus/httpx/internal/payload/transformer"
 	"github.com/xoctopus/httpx/internal/request"

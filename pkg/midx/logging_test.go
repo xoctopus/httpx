@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/xoctopus/logx"
+	"github.com/xoctopus/x/logx"
 	"github.com/xoctopus/x/testx/bdd"
 
 	"github.com/xoctopus/httpx/internal/testutil"

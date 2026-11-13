@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/xoctopus/logx"
+	"github.com/xoctopus/x/logx"
 )
 
 type Server struct {
