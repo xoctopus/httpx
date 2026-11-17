@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/xoctopus/httpx/example/pkg/modules/user"
+	"github.com/xoctopus/httpx/internal/cmd/example/modules/user"
 	"github.com/xoctopus/httpx/pkg/httpx"
 )
 

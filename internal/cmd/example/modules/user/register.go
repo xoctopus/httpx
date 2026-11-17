@@ -24,35 +24,27 @@ type Info struct {
 	LastActiveAt time.Time `json:"lastActiveAt"`
 }
 
+// Now is the clock of the module, replaced by examples for a stable output
+var Now = time.Now
+
 var users syncx.Map[string, *Info]
 
-func init() {
-	users = syncx.NewXmap[string, *Info]()
+func init() { Reset() }
 
-	users.Store("0", &Info{
-		UserID:       "0",
-		Username:     "0",
-		Password:     "0",
-		Type:         "管理员",
-		CreatedAt:    time.Now(),
-		LastActiveAt: time.Now(),
-	})
-	users.Store("1", &Info{
-		UserID:       "1",
-		Username:     "1",
-		Password:     "1",
-		Type:         "普通会员",
-		CreatedAt:    time.Now(),
-		LastActiveAt: time.Now(),
-	})
-	users.Store("2", &Info{
-		UserID:       "2",
-		Username:     "2",
-		Password:     "2",
-		Type:         "高级会员",
-		CreatedAt:    time.Now(),
-		LastActiveAt: time.Now(),
-	})
+// Reset restores the store to the initial users 0 (管理员), 1 (普通会员) and 2 (高级会员)
+func Reset() {
+	users = syncx.NewXmap[string, *Info]()
+	for id, typ := range []string{"管理员", "普通会员", "高级会员"} {
+		uid := strconv.Itoa(id)
+		users.Store(uid, &Info{
+			UserID:       uid,
+			Username:     uid,
+			Password:     uid,
+			Type:         typ,
+			CreatedAt:    Now(),
+			LastActiveAt: Now(),
+		})
+	}
 }
 
 func Register(_ context.Context, r *RegisterParam) (*Info, error) {
@@ -81,8 +73,8 @@ func Register(_ context.Context, r *RegisterParam) (*Info, error) {
 		Username:     r.Username,
 		Password:     r.Password,
 		Type:         "普通会员",
-		CreatedAt:    time.Now(),
-		LastActiveAt: time.Now(),
+		CreatedAt:    Now(),
+		LastActiveAt: Now(),
 	}
 	users.Store(u.UserID, u)
 	u2 := *u

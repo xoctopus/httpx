@@ -1,7 +1,7 @@
 package user
 
 import (
-	"github.com/xoctopus/httpx/example/cmd/example/apis/providers"
+	"github.com/xoctopus/httpx/internal/cmd/example/apis/providers"
 	"github.com/xoctopus/httpx/pkg/httpx"
 )
 

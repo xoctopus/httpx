@@ -2,6 +2,10 @@
 <a name="HEAD"></a>
 ## [HEAD](https://github.com/xoctopus/httpx/compare/v1.0.0-rc2...HEAD) (2026-11-13)
 
+### Chore
+
+* update CHANGELOG
+
 ### Docs
 
 * **openspec:** archive split-error-location

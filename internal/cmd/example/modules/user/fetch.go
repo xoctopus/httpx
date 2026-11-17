@@ -3,6 +3,8 @@ package user
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	sqlerr "github.com/xoctopus/sqlx/pkg/errors"
@@ -71,6 +73,7 @@ func ListUsers(_ context.Context, r *ListParam) (*ListResult, error) {
 		return true
 	})
 
+	slices.SortFunc(res.Data, func(a, b *Info) int { return strings.Compare(a.UserID, b.UserID) })
 	res.Total = users.Len()
 	return res, nil
 }

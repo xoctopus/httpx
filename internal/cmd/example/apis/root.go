@@ -5,9 +5,9 @@ import (
 
 	"github.com/xoctopus/confx/pkg/confjwt"
 
-	"github.com/xoctopus/httpx/example/cmd/example/apis/login"
-	"github.com/xoctopus/httpx/example/cmd/example/apis/providers"
-	"github.com/xoctopus/httpx/example/cmd/example/apis/user"
+	"github.com/xoctopus/httpx/internal/cmd/example/apis/login"
+	"github.com/xoctopus/httpx/internal/cmd/example/apis/providers"
+	"github.com/xoctopus/httpx/internal/cmd/example/apis/user"
 	"github.com/xoctopus/httpx/pkg/httpx"
 	"github.com/xoctopus/httpx/pkg/routex"
 )

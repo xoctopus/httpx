@@ -9,7 +9,7 @@ import (
 	"github.com/xoctopus/x/contextx"
 	"github.com/xoctopus/x/logx"
 
-	"github.com/xoctopus/httpx/example/cmd/example/apis"
+	"github.com/xoctopus/httpx/internal/cmd/example/apis"
 	"github.com/xoctopus/httpx/pkg/confhttp"
 	"github.com/xoctopus/httpx/pkg/httpx"
 	"github.com/xoctopus/httpx/pkg/midx"

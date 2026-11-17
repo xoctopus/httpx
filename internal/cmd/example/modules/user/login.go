@@ -38,7 +38,7 @@ func LoginValidateByPassword(ctx context.Context, r *LoginParam) (*LoginResult, 
 		UserID:    u.UserID,
 		Username:  u.Username,
 		Token:     tok,
-		ExpiredAt: time.Now().Add(time.Duration(j.ExpIn)),
+		ExpiredAt: Now().Add(time.Duration(j.ExpIn)),
 	}, nil
 }
 

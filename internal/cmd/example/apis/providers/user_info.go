@@ -6,7 +6,7 @@ import (
 	"github.com/xoctopus/confx/pkg/confjwt"
 	"github.com/xoctopus/x/misc/must"
 
-	"github.com/xoctopus/httpx/example/pkg/modules/user"
+	"github.com/xoctopus/httpx/internal/cmd/example/modules/user"
 )
 
 type tCtxCurrentUserInfo struct{}
